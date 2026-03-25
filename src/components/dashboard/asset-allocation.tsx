@@ -1,11 +1,12 @@
 import React from "react";
+import { cn } from "@/lib/utils";
 
 export const AssetAllocation: React.FC = () => {
   return (
     <div className="p-6 rounded-xl glass gold-glow space-y-6">
-      <div className="flex items-center justify-between">
-        <h3 className="text-sm font-bold uppercase tracking-widest text-muted-foreground">Asset Allocation</h3>
-        <div className="flex gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h3 className="text-sm font-bold uppercase tracking-widest text-muted-foreground shrink-0">Asset Allocation</h3>
+        <div className="flex gap-2 shrink-0">
           {["CLASS", "SECTOR", "REGION"].map((t) => (
             <button key={t} className="text-[10px] px-2 py-1 rounded bg-white/5 hover:bg-white/10 text-muted-foreground border border-white/10 uppercase">
               {t}
@@ -46,4 +47,3 @@ export const AssetAllocation: React.FC = () => {
   );
 };
 
-import { cn } from "@/lib/utils";
