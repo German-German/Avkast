@@ -13,7 +13,7 @@ const SidebarItem = ({ icon: Icon, label, active = false }: { icon: any, label: 
   </div>
 );
 
-import { LayoutDashboard, Wallet, BrainCircuit, ListVideo, HelpCircle, LogOut } from "lucide-react";
+import { LayoutDashboard, Wallet, BrainCircuit, ListVideo, ListTodo, HelpCircle, LogOut } from "lucide-react";
 
 export const Sidebar: React.FC = () => {
   return (
@@ -31,6 +31,7 @@ export const Sidebar: React.FC = () => {
         <SidebarItem icon={LayoutDashboard} label="DASHBOARD" active />
         <SidebarItem icon={Wallet} label="PORTFOLIO" />
         <SidebarItem icon={BrainCircuit} label="AI ADVISOR" />
+        <SidebarItem icon={ListTodo} label="TASKS" />
         <SidebarItem icon={ListVideo} label="WATCHLIST" />
       </nav>
 

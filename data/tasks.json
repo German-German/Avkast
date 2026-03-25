@@ -1,0 +1,58 @@
+{
+    "portfolio_summary": {
+        "total_value_usd": 124500.00,
+        "unrealized_gain_loss_pct": 8.4,
+        "risk_profile": "Growth-Seeker (Level 4)",
+        "esg_alignment_score": 92
+    },
+    "active_signals": [
+        {
+            "id": "sig_001",
+            "ticker": "AAPL",
+            "action": "BUY",
+            "confidence_score": 0.89,
+            "urgency": "high",
+            "reasoning": "Macro Agent detects a pivot in consumer liquidity; Fundamental Agent confirms undervalued R&D pipeline in AI hardware.",
+            "source_agents": [
+                "Macro",
+                "Fundamental"
+            ],
+            "timestamp": "2026-03-25T10:00:00Z",
+            "status": "pending_approval"
+        },
+        {
+            "id": "sig_002",
+            "ticker": "TSLA",
+            "action": "REBALANCE",
+            "confidence_score": 0.72,
+            "urgency": "medium",
+            "reasoning": "Sentiment Agent reports 'Over-Exuberance' in social chatter; suggest trimming position by 15% to lock in gains.",
+            "source_agents": [
+                "Sentiment"
+            ],
+            "timestamp": "2026-03-25T09:15:00Z",
+            "status": "viewed"
+        },
+        {
+            "id": "sig_003",
+            "ticker": "BND",
+            "action": "HOLD",
+            "confidence_score": 0.95,
+            "urgency": "low",
+            "reasoning": "Yield remains consistent with the Atomic Yield routing strategy for idle cash safety.",
+            "source_agents": [
+                "Macro"
+            ],
+            "timestamp": "2026-03-24T18:30:00Z",
+            "status": "completed"
+        }
+    ],
+    "constraints": {
+        "excluded_sectors": [
+            "Tobacco",
+            "Gambling"
+        ],
+        "max_concentration_pct": 15,
+        "automatic_rebalancing_enabled": false
+    }
+}
