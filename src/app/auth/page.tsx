@@ -24,30 +24,44 @@ export default function AuthPage() {
     setError("");
     setLoading(true);
 
-    const url = tab === "signup" ? "/api/auth/signup" : "/api/auth/signin";
+    const endpoint = tab === "signup" ? "/api/auth/signup" : "/api/auth/signin";
     const body = tab === "signup"
       ? { username, email, password, initialWealth: Number(initialWealth), preferredMarkets: preferredMarkets.split(',').map(s=>s.trim()) }
       : { email, password };
 
     try {
-      const res = await fetch(url, {
+      const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
-      const data = await res.json();
-      console.log(`[AuthPage] ${tab} response:`, data);
+
+      let data;
+      try {
+        data = await res.json();
+      } catch (parseErr) {
+        console.error("[AuthPage] Failed to parse response JSON:", parseErr);
+        throw new Error("Malformed server response");
+      }
+
+      console.log(`[AuthPage] ${tab} response status:`, res.status, data);
+      
       if (!res.ok) {
-        setError(data.error || "Something went wrong.");
+        setError(data.error || "Authentication failed. Please check your credentials.");
         return;
       }
-      console.log("[AuthPage] Refreshing context...");
+      
+      console.log("[AuthPage] Refreshing session context...");
       await refresh();
-      console.log("[AuthPage] Navigating to /welcome");
-      router.push("/welcome");
-    } catch (err) {
-      console.error(`[AuthPage] ${tab} error:`, err);
-      setError("Network error. Please try again.");
+      
+      // Add a small delay for state propagation
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      console.log("[AuthPage] Redirecting to /welcome");
+      window.location.href = "/welcome";
+    } catch (err: any) {
+      console.error("[AuthPage] Submit Error:", err);
+      setError(err.message || "Network error. Is the server running?");
     } finally {
       setLoading(false);
     }
@@ -56,22 +70,22 @@ export default function AuthPage() {
   async function handleGuest() {
     setLoading(true);
     setError("");
+    console.log("[AuthPage] Starting guest session...");
     try {
-      console.log("[AuthPage] Starting guest session...");
       const res = await fetch("/api/auth/guest", { method: "POST" });
-      if (res.ok) {
-        const data = await res.json();
-        console.log("[AuthPage] Guest success:", data);
-        await refresh();
-        console.log("[AuthPage] Navigating to dashboard");
-        router.push("/");
-      } else {
-        console.warn("[AuthPage] Guest failure:", res.status);
-        setError("Failed to start guest session.");
-      }
-    } catch (err) {
-      console.error("[AuthPage] Guest error:", err);
-      setError("Network error.");
+      const data = await res.json();
+      console.log("[AuthPage] Guest response:", data);
+      
+      if (!res.ok) throw new Error(data.error || "Guest access failed");
+      
+      await refresh();
+      // Wait for session sync
+      await new Promise(resolve => setTimeout(resolve, 300));
+      console.log("[AuthPage] Redirecting to dashboard");
+      window.location.href = "/";
+    } catch (err: any) {
+      console.error("[AuthPage] Guest Error:", err);
+      setError(err.message || "Failed to start guest session.");
     } finally {
       setLoading(false);
     }

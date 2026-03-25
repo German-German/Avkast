@@ -63,8 +63,14 @@ export function hashPassword(password: string): { hash: string; salt: string } {
 }
 
 export function verifyPassword(password: string, hash: string, salt: string): boolean {
-  const derived = crypto.scryptSync(password, salt, 64).toString("hex");
-  return crypto.timingSafeEqual(Buffer.from(hash, "hex"), Buffer.from(derived, "hex"));
+  if (!password || !hash || !salt) return false;
+  try {
+    const verifyHash = crypto.scryptSync(password, salt, 64).toString("hex");
+    return crypto.timingSafeEqual(Buffer.from(hash, "hex"), Buffer.from(verifyHash, "hex"));
+  } catch (err) {
+    console.error("[DB] verifyPassword error:", err);
+    return false;
+  }
 }
 
 // ── Session helpers ─────────────────────────────────────────
