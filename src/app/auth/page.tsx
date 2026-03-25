@@ -2,10 +2,12 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/contexts/auth-context";
 import { cn } from "@/lib/utils";
 import { Eye, EyeOff, Loader2, User, Mail, Lock, ArrowRight } from "lucide-react";
 
 export default function AuthPage() {
+  const { refresh } = useAuth();
   const [tab, setTab] = useState<"signin" | "signup">("signin");
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
@@ -36,6 +38,7 @@ export default function AuthPage() {
         setError(data.error || "Something went wrong.");
         return;
       }
+      await refresh();
       router.push("/welcome");
     } catch {
       setError("Network error. Please try again.");
@@ -50,6 +53,7 @@ export default function AuthPage() {
     try {
       const res = await fetch("/api/auth/guest", { method: "POST" });
       if (res.ok) {
+        await refresh();
         router.push("/");
       } else {
         setError("Failed to start guest session.");
