@@ -2,6 +2,7 @@
 import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useAuth } from "@/contexts/auth-context";
 import { cn } from "@/lib/utils";
 import { LayoutDashboard, Wallet, BrainCircuit, ListVideo, ListTodo, HelpCircle, LogOut, UserCircle } from "lucide-react";
 
@@ -22,6 +23,7 @@ const SidebarItem = ({ icon: Icon, label, href, active }: { icon: any, label: st
 
 export const Sidebar: React.FC = () => {
   const pathname = usePathname();
+  const { signOut } = useAuth();
 
   return (
     <aside className="w-64 border-r border-border bg-background flex flex-col h-screen sticky top-0 shrink-0">
@@ -52,7 +54,12 @@ export const Sidebar: React.FC = () => {
         
         <div className="space-y-1">
           <SidebarItem icon={HelpCircle} label="SUPPORT" href="/support" active={pathname === "/support"} />
-          <SidebarItem icon={LogOut} label="SIGN OUT" href="/auth/signout" active={false} />
+          <div onClick={signOut} className="flex items-center gap-3 px-4 py-3 cursor-pointer transition-all duration-200 group hover:bg-destructive/10">
+            <LogOut className="h-5 w-5 text-muted-foreground group-hover:text-destructive" />
+            <span className="text-sm font-medium text-muted-foreground group-hover:text-destructive">
+              SIGN OUT
+            </span>
+          </div>
         </div>
       </div>
     </aside>

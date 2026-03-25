@@ -4,6 +4,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { Sidebar } from "@/components/dashboard/sidebar";
 import { Send, User, Bot, Sparkles, Loader2, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Topbar } from "@/components/dashboard/topbar";
 import { ExplainableAI } from "@/components/shared/explainable-ai";
 
 const RANDOM_RESPONSES = [
@@ -71,15 +72,19 @@ export default function AdvisorPage() {
       <Sidebar />
       
       <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
-        <header className="h-16 border-b border-border flex items-center justify-between px-8 bg-background/50 backdrop-blur-md shrink-0">
-          <div className="flex items-center gap-3">
-             <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
-             <h1 className="text-xl font-bold tracking-tight text-foreground">AI ADVISOR: NEURAL LOGIC V4.2</h1>
-          </div>
-          <div className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest">
-            Latency: 42ms | Swarm Active
-          </div>
-        </header>
+        <Topbar
+          leftContent={
+            <div className="flex items-center gap-3">
+               <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+               <h1 className="text-xl font-bold tracking-tight text-foreground">AI ADVISOR: NEURAL LOGIC V4.2</h1>
+            </div>
+          }
+          rightContent={
+            <div className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest pr-4 border-r border-white/10">
+              Latency: 42ms | Swarm Active
+            </div>
+          }
+        />
 
         <div className="flex-1 overflow-y-auto p-8 space-y-6" ref={scrollRef}>
           {messages.map((msg, i) => (

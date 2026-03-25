@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { Sidebar } from "@/components/dashboard/sidebar";
 import { useMemory } from "@/hooks/use-memory";
+import { Topbar } from "@/components/dashboard/topbar";
 import { cn } from "@/lib/utils";
 import {
   UserCircle, Shield, Brain, Clock, Trash2, Download,
@@ -80,36 +81,40 @@ export default function ProfilePage() {
       <Sidebar />
       <div className="flex-1 flex flex-col min-w-0">
         {/* Header */}
-        <header className="h-16 border-b border-border flex items-center justify-between px-8 bg-background/50 backdrop-blur-md sticky top-0 z-40">
-          <div className="flex items-center gap-3">
-            <UserCircle className="h-5 w-5 text-primary" />
-            <h1 className="text-xl font-bold tracking-tight text-foreground">CLIENT BRAIN — MEMORY PROFILE</h1>
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={handleDownload}
-              className="flex items-center gap-2 h-8 px-3 rounded-lg bg-white/5 border border-white/10 text-xs font-bold uppercase text-muted-foreground hover:text-foreground hover:border-white/20 transition-all"
-            >
-              <Download className="h-3.5 w-3.5" /> Export
-            </button>
-            <button
-              onClick={handleReset}
-              className={cn(
-                "flex items-center gap-2 h-8 px-3 rounded-lg border text-xs font-bold uppercase transition-all",
-                resetConfirm
-                  ? "bg-destructive/10 border-destructive/30 text-destructive hover:bg-destructive/20"
-                  : "bg-white/5 border-white/10 text-muted-foreground hover:text-foreground hover:border-white/20"
-              )}
-            >
-              <Trash2 className="h-3.5 w-3.5" /> {resetConfirm ? "Confirm Reset" : "Reset Memory"}
-            </button>
-            {resetConfirm && (
-              <button onClick={() => setResetConfirm(false)} className="text-xs text-muted-foreground hover:text-foreground">
-                Cancel
+        <Topbar
+          leftContent={
+            <div className="flex items-center gap-3">
+              <UserCircle className="h-5 w-5 text-primary" />
+              <h1 className="text-xl font-bold tracking-tight text-foreground">CLIENT BRAIN — MEMORY PROFILE</h1>
+            </div>
+          }
+          rightContent={
+            <div className="flex items-center gap-2 pr-4 border-r border-white/10">
+              <button
+                onClick={handleDownload}
+                className="flex items-center gap-2 h-8 px-3 rounded-lg bg-white/5 border border-white/10 text-xs font-bold uppercase text-muted-foreground hover:text-foreground hover:border-white/20 transition-all"
+              >
+                <Download className="h-3.5 w-3.5" /> Export
               </button>
-            )}
-          </div>
-        </header>
+              <button
+                onClick={handleReset}
+                className={cn(
+                  "flex items-center gap-2 h-8 px-3 rounded-lg border text-xs font-bold uppercase transition-all",
+                  resetConfirm
+                    ? "bg-destructive/10 border-destructive/30 text-destructive hover:bg-destructive/20"
+                    : "bg-white/5 border-white/10 text-muted-foreground hover:text-foreground hover:border-white/20"
+                )}
+              >
+                <Trash2 className="h-3.5 w-3.5" /> {resetConfirm ? "Confirm Reset" : "Reset Memory"}
+              </button>
+              {resetConfirm && (
+                <button onClick={() => setResetConfirm(false)} className="text-xs text-muted-foreground hover:text-foreground">
+                  Cancel
+                </button>
+              )}
+            </div>
+          }
+        />
 
         <div className="p-8 space-y-6 overflow-y-auto">
           {/* Memory health banner */}

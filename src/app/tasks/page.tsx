@@ -7,6 +7,7 @@ import { ExplainableAI } from "@/components/shared/explainable-ai";
 import { useMemory } from "@/hooks/use-memory";
 import { ShieldAlert, Clock, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Topbar } from "@/components/dashboard/topbar";
 
 interface Task {
   id: string;
@@ -74,15 +75,19 @@ export default function TasksPage() {
       <Sidebar />
 
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="h-16 border-b border-border flex items-center justify-between px-8 bg-background/50 backdrop-blur-md sticky top-0 z-40">
-          <h1 className="text-xl font-bold tracking-tight text-foreground">SWARM COMMAND: TASKS & SIGNALS</h1>
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] font-mono text-muted-foreground uppercase">Sync Status:</span>
-            <span className="flex items-center gap-1.5 text-[10px] font-bold text-accent uppercase">
-              <div className="h-1.5 w-1.5 rounded-full bg-accent animate-pulse" /> Live Connected
-            </span>
-          </div>
-        </header>
+        <Topbar
+          leftContent={
+            <h1 className="text-xl font-bold tracking-tight text-foreground">SWARM COMMAND: TASKS & SIGNALS</h1>
+          }
+          rightContent={
+            <div className="flex items-center gap-2 pr-4 border-r border-white/10">
+              <span className="text-[10px] font-mono text-muted-foreground uppercase">Sync Status:</span>
+              <span className="flex items-center gap-1.5 text-[10px] font-bold text-accent uppercase">
+                <div className="h-1.5 w-1.5 rounded-full bg-accent animate-pulse" /> Live Connected
+              </span>
+            </div>
+          }
+        />
 
         <div className="p-8 space-y-8 overflow-y-auto">
           {/* Summary Row */}

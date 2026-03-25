@@ -7,7 +7,8 @@ import { MetricCard } from "@/components/dashboard/metric-card";
 import { AIInsightCard } from "@/components/dashboard/ai-insight-card";
 import { AssetAllocation } from "@/components/dashboard/asset-allocation";
 import { HoldingsHeatMap } from "@/components/dashboard/holdings-heatmap";
-import { Search, Bell, Settings, UserCircle, Loader2 } from "lucide-react";
+import { Topbar } from "@/components/dashboard/topbar";
+import { Loader2 } from "lucide-react";
 
 export default function DashboardPage() {
   const [data, setData] = useState<any>(null);
@@ -50,35 +51,7 @@ export default function DashboardPage() {
 
       <div className="flex-1 flex flex-col min-w-0">
         {/* ── Top Header ── */}
-        <header className="h-16 border-b border-border flex items-center justify-between px-8 bg-background/50 backdrop-blur-md sticky top-0 z-40">
-          <div className="relative w-96">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <input
-              type="text"
-              placeholder="Search assets, symbols, news..."
-              className="w-full bg-white/5 border border-white/10 rounded-full py-2 pl-10 pr-4 text-sm focus:outline-none focus:ring-1 focus:ring-primary/50 transition-all font-medium"
-            />
-          </div>
-
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1">
-              <button className="h-9 w-9 flex items-center justify-center rounded-xl hover:bg-white/5 text-muted-foreground transition-all">
-                <Bell className="h-5 w-5" />
-              </button>
-              <button className="h-9 w-9 flex items-center justify-center rounded-xl hover:bg-white/5 text-muted-foreground transition-all">
-                <Settings className="h-5 w-5" />
-              </button>
-            </div>
-            <div className="h-6 w-px bg-white/10 mx-3" />
-            <div className="flex items-center gap-3">
-              <div className="text-right hidden sm:block">
-                <div className="text-xs font-bold text-foreground leading-none">Alexander Vance</div>
-                <div className="text-[10px] text-primary font-bold tracking-tighter uppercase mt-0.5">Premium Tier</div>
-              </div>
-              <UserCircle className="h-9 w-9 text-muted-foreground" />
-            </div>
-          </div>
-        </header>
+        <Topbar />
 
         {/* ── Dashboard Content ── */}
         <div className="p-8 space-y-8 overflow-y-auto">

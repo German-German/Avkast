@@ -5,6 +5,7 @@ import { Sidebar } from "@/components/dashboard/sidebar";
 import { useAuth } from "@/contexts/auth-context";
 import { cn } from "@/lib/utils";
 import { Eye, Plus, Trash2, Search, TrendingUp, TrendingDown, Loader2, Star } from "lucide-react";
+import { Topbar } from "@/components/dashboard/topbar";
 
 interface WatchlistItem {
   id: string;
@@ -101,19 +102,25 @@ export default function WatchlistPage() {
     <main className="flex min-h-screen bg-background w-full">
       <Sidebar />
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="h-16 border-b border-border flex items-center justify-between px-8 bg-background/50 backdrop-blur-md sticky top-0 z-40">
-          <div className="flex items-center gap-3">
-            <Star className="h-5 w-5 text-primary" />
-            <h1 className="text-xl font-bold tracking-tight text-foreground">WATCHLIST</h1>
-            <span className="text-[10px] font-mono text-muted-foreground ml-2">{items.length} symbols</span>
-          </div>
-          <button
-            onClick={() => setShowSearch(!showSearch)}
-            className="flex items-center gap-2 h-9 px-4 rounded-xl bg-primary/10 border border-primary/20 text-primary text-xs font-bold uppercase tracking-tight hover:bg-primary/20 transition-all"
-          >
-            <Plus className="h-3.5 w-3.5" /> Add Symbol
-          </button>
-        </header>
+        <Topbar 
+          leftContent={
+            <div className="flex items-center gap-3">
+              <Star className="h-5 w-5 text-primary" />
+              <h1 className="text-xl font-bold tracking-tight text-foreground">WATCHLIST</h1>
+              <span className="text-[10px] font-mono text-muted-foreground ml-2">{items.length} symbols</span>
+            </div>
+          }
+          rightContent={
+            <div className="flex items-center pr-4 border-r border-white/10">
+              <button
+                onClick={() => setShowSearch(!showSearch)}
+                className="flex items-center gap-2 h-9 px-4 rounded-xl bg-primary/10 border border-primary/20 text-primary text-xs font-bold uppercase tracking-tight hover:bg-primary/20 transition-all"
+              >
+                <Plus className="h-3.5 w-3.5" /> Add Symbol
+              </button>
+            </div>
+          }
+        />
 
         <div className="p-8 space-y-6 overflow-y-auto">
           {/* Guest banner */}

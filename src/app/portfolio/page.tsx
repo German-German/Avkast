@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { Sidebar } from "@/components/dashboard/sidebar";
 import { cn } from "@/lib/utils";
 import { TrendingUp, TrendingDown, BarChart3, RefreshCw, Eye, EyeOff } from "lucide-react";
+import { Topbar } from "@/components/dashboard/topbar";
 
 const HOLDINGS = [
   { ticker: "AAPL", name: "Apple Inc.", sector: "Technology", shares: 340, price: 189.45, costBasis: 142.3, weight: 12.4, change: +2.31 },
@@ -51,24 +52,28 @@ export default function PortfolioPage() {
       <Sidebar />
       <div className="flex-1 flex flex-col min-w-0">
         {/* Header */}
-        <header className="h-16 border-b border-border flex items-center justify-between px-8 bg-background/50 backdrop-blur-md sticky top-0 z-40">
-          <div className="flex items-center gap-3">
-            <BarChart3 className="h-5 w-5 text-primary" />
-            <h1 className="text-xl font-bold tracking-tight text-foreground">PORTFOLIO</h1>
-          </div>
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => setHideValues(v => !v)}
-              className="h-9 w-9 flex items-center justify-center rounded-xl hover:bg-white/5 text-muted-foreground transition-all"
-              title="Toggle value visibility"
-            >
-              {hideValues ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-            </button>
-            <button className="flex items-center gap-2 h-9 px-4 rounded-xl bg-primary/10 border border-primary/20 text-primary text-xs font-bold uppercase tracking-tight hover:bg-primary/20 transition-all">
-              <RefreshCw className="h-3.5 w-3.5" /> Rebalance
-            </button>
-          </div>
-        </header>
+        <Topbar 
+          leftContent={
+            <div className="flex items-center gap-3">
+              <BarChart3 className="h-5 w-5 text-primary" />
+              <h1 className="text-xl font-bold tracking-tight text-foreground">PORTFOLIO</h1>
+            </div>
+          }
+          rightContent={
+            <div className="flex items-center gap-3 pr-4 border-r border-white/10">
+              <button
+                onClick={() => setHideValues(v => !v)}
+                className="h-9 w-9 flex items-center justify-center rounded-xl hover:bg-white/5 text-muted-foreground transition-all"
+                title="Toggle value visibility"
+              >
+                {hideValues ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+              <button className="flex items-center gap-2 h-9 px-4 rounded-xl bg-primary/10 border border-primary/20 text-primary text-xs font-bold uppercase tracking-tight hover:bg-primary/20 transition-all">
+                <RefreshCw className="h-3.5 w-3.5" /> Rebalance
+              </button>
+            </div>
+          }
+        />
 
         <div className="p-8 space-y-8 overflow-y-auto">
           {/* KPI Row */}
