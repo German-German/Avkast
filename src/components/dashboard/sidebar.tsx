@@ -42,7 +42,6 @@ export const Sidebar: React.FC = () => {
         <SidebarItem icon={BrainCircuit} label="AI ADVISOR" href="/advisor" active={pathname === "/advisor"} />
         <SidebarItem icon={ListTodo} label="TASKS" href="/tasks" active={pathname === "/tasks"} />
         <SidebarItem icon={ListVideo} label="WATCHLIST" href="/watchlist" active={pathname === "/watchlist"} />
-        <SidebarItem icon={UserCircle} label="PROFILE" href="/profile" active={pathname === "/profile"} />
       </nav>
 
       <div className="p-4 space-y-4">
