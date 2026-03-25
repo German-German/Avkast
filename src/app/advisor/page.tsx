@@ -159,7 +159,7 @@ export default function AdvisorPage() {
                 onClick={() => setInput(hint)}
                 className="text-[10px] font-bold text-muted-foreground hover:text-primary transition-colors uppercase tracking-widest px-3 py-1 border border-white/5 rounded-full hover:border-primary/20"
                >
-                 "{hint}"
+                 {hint}
                </button>
              ))}
           </div>

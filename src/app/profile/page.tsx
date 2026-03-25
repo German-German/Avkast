@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Sidebar } from "@/components/dashboard/sidebar";
 import { useMemory } from "@/hooks/use-memory";
 import { cn } from "@/lib/utils";
@@ -42,6 +42,18 @@ export default function ProfilePage() {
   const [newTicker, setNewTicker] = useState("");
   const [newGoal, setNewGoal] = useState("");
   const [resetConfirm, setResetConfirm] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
+  /** Hydration-safe date formatter — returns empty string on server to avoid mismatch */
+  const formatDate = (iso: string) => {
+    if (!mounted) return "—";
+    return new Date(iso).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
+  };
+  const formatDateTime = (iso: string) => {
+    if (!mounted) return "—";
+    return new Date(iso).toLocaleString("en-US", { year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
+  };
 
   const p = memory.explicitPreferences;
   const b = memory.behaviouralProfile;
@@ -106,7 +118,7 @@ export default function ProfilePage() {
             <div>
               <div className="text-sm font-bold text-foreground">Client Brain Active</div>
               <div className="text-xs text-muted-foreground">
-                {memory.decisionHistory.length} decisions tracked · Last updated {new Date(memory.lastUpdatedAt).toLocaleDateString()} ·
+                {memory.decisionHistory.length} decisions tracked · Last updated {formatDate(memory.lastUpdatedAt)} ·
                 {" "}{Object.values(memory.behaviouralProfile).filter(v => (v as any).source === "inferred").length} inferred traits
               </div>
             </div>
@@ -479,7 +491,7 @@ export default function ProfilePage() {
                       <p className="text-xs font-medium text-foreground">{entry.summary}</p>
                       <div className="flex items-center gap-2 mt-1">
                         <p className="text-[10px] text-muted-foreground font-mono">
-                          {new Date(entry.timestamp).toLocaleString()}
+                          {formatDateTime(entry.timestamp)}
                         </p>
                         {entry.source === "inferred" && <InferredBadge />}
                       </div>
