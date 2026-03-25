@@ -3,8 +3,10 @@
 import React, { useState, useEffect } from "react";
 import { Sidebar } from "@/components/dashboard/sidebar";
 import { cn } from "@/lib/utils";
-import { TrendingUp, TrendingDown, BarChart3, RefreshCw, Eye, EyeOff } from "lucide-react";
+import { TrendingUp, TrendingDown, BarChart3, RefreshCw, Eye, EyeOff, Lock } from "lucide-react";
 import { Topbar } from "@/components/dashboard/topbar";
+import { useAuth } from "@/contexts/auth-context";
+import Link from "next/link";
 
 const INITIAL_HOLDINGS = [
   { ticker: "AAPL", name: "Apple Inc.", sector: "Technology", shares: 340, price: 189.45, costBasis: 142.3, weight: 12.4, change: +2.31 },
@@ -29,11 +31,20 @@ const ALLOCATION = [
 ];
 
 export default function PortfolioPage() {
+  const { user, isGuest } = useAuth();
   const [hideValues, setHideValues] = useState(false);
   const [tab, setTab] = useState<"holdings" | "allocation" | "performance">("holdings");
   const [sort, setSort] = useState<"weight" | "change" | "gain">("weight");
   
-  const [holdings, setHoldings] = useState(INITIAL_HOLDINGS);
+  const startingWealth = user?.initialWealth || 100000;
+  
+  const scaledHoldings = INITIAL_HOLDINGS.map(h => ({
+    ...h,
+    shares: (startingWealth * (h.weight / 100)) / h.price,
+    costBasis: h.price * 0.95 // mock historical entry
+  }));
+
+  const [holdings, setHoldings] = useState(scaledHoldings);
 
   // Live price simulation loop
   useEffect(() => {
@@ -59,8 +70,8 @@ export default function PortfolioPage() {
   });
 
   const totalValue = holdings.reduce((sum, h) => sum + (h.price * h.shares), 0);
-  const prevTotalValue = INITIAL_HOLDINGS.reduce((sum, h) => sum + (h.price * h.shares), 0);
-  const dayChange = totalValue - prevTotalValue + 14203; // Keeping baseline change
+  const prevTotalValue = scaledHoldings.reduce((sum, h) => sum + (h.price * h.shares), 0);
+  const dayChange = totalValue - prevTotalValue + (startingWealth * 0.005); // base daily positive drift
   const ytdReturn = 12.4 + ((totalValue - prevTotalValue) / prevTotalValue * 100);
 
   const mask = (val: string) => (hideValues ? "••••••" : val);
@@ -74,7 +85,7 @@ export default function PortfolioPage() {
           leftContent={
             <div className="flex items-center gap-3">
               <BarChart3 className="h-5 w-5 text-primary" />
-              <h1 className="text-xl font-bold tracking-tight text-foreground">PORTFOLIO</h1>
+              <h1 className="text-xl font-bold tracking-tight text-foreground whitespace-nowrap truncate">PORTFOLIO</h1>
             </div>
           }
           rightContent={
@@ -93,22 +104,37 @@ export default function PortfolioPage() {
           }
         />
 
-        <div className="p-8 space-y-8 overflow-y-auto">
-          {/* KPI Row */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
-            {[
-              { label: "Total Value", value: mask(`$${totalValue.toLocaleString()}`), sub: "As of today", positive: true },
-              { label: "Day Change", value: mask(`+$${dayChange.toLocaleString()}`), sub: "+0.50% today", positive: true },
-              { label: "YTD Return", value: mask(`+${ytdReturn}%`), sub: "vs Benchmark +8.2%", positive: true },
-              { label: "Buying Power", value: mask("$420,100"), sub: "Cash available", positive: true },
-            ].map(kpi => (
-              <div key={kpi.label} className="p-5 rounded-xl glass space-y-2">
-                <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{kpi.label}</div>
-                <div className={cn("text-2xl font-bold tracking-tighter", kpi.positive ? "text-foreground" : "text-destructive")}>{kpi.value}</div>
-                <div className="text-[10px] text-muted-foreground">{kpi.sub}</div>
+        <div className="p-8 space-y-8 overflow-y-auto w-full">
+          {isGuest ? (
+            <div className="p-8 mt-20 rounded-3xl glass border border-white/5 text-center space-y-4 max-w-lg mx-auto shadow-2xl">
+               <div className="mx-auto h-20 w-20 rounded-2xl bg-destructive/10 border border-destructive/20 flex items-center justify-center mb-6">
+                 <Lock className="h-10 w-10 text-destructive" />
+               </div>
+               <h2 className="text-2xl font-bold tracking-[-0.04em] text-foreground">GUEST MODE LOCKED</h2>
+               <p className="text-muted-foreground text-sm px-4">Create a permanent account and define your initial wealth to unlock live institutional portfolio tracking.</p>
+               <div className="pt-6">
+                 <Link href="/profile" className="px-8 py-4 bg-primary text-primary-foreground font-bold uppercase tracking-widest text-xs rounded-xl inline-flex items-center gap-2 hover:opacity-90 transition-all">
+                   Secure Account Now
+                 </Link>
+               </div>
+            </div>
+          ) : (
+            <>
+              {/* KPI Row */}
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
+                {[
+                  { label: "Total Value", value: mask(`$${totalValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}`), sub: "As of today", positive: true },
+                  { label: "Day Change", value: mask(`+$${Math.abs(dayChange).toLocaleString(undefined, { maximumFractionDigits: 0 })}`), sub: "+0.50% today", positive: dayChange >= 0 },
+                  { label: "YTD Return", value: mask(`+${ytdReturn.toFixed(2)}%`), sub: "vs Benchmark +8.2%", positive: true },
+                  { label: "Buying Power", value: mask(`$${(startingWealth * 0.15).toLocaleString(undefined, { maximumFractionDigits: 0 })}`), sub: "Cash available", positive: true },
+                ].map(kpi => (
+                  <div key={kpi.label} className="p-5 rounded-xl glass space-y-2">
+                    <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{kpi.label}</div>
+                    <div className={cn("text-2xl font-bold tracking-tighter", kpi.positive ? "text-foreground" : "text-destructive")}>{kpi.value}</div>
+                    <div className="text-[10px] text-muted-foreground">{kpi.sub}</div>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
 
           {/* Tab Bar */}
           <div className="flex items-center gap-1 border-b border-border pb-0">
@@ -259,6 +285,8 @@ export default function PortfolioPage() {
                 </div>
               ))}
             </div>
+          )}
+            </>
           )}
         </div>
       </div>

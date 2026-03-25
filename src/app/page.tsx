@@ -8,9 +8,12 @@ import { AIInsightCard } from "@/components/dashboard/ai-insight-card";
 import { AssetAllocation } from "@/components/dashboard/asset-allocation";
 import { HoldingsHeatMap } from "@/components/dashboard/holdings-heatmap";
 import { Topbar } from "@/components/dashboard/topbar";
-import { Loader2 } from "lucide-react";
+import { Loader2, Lock } from "lucide-react";
+import { useAuth } from "@/contexts/auth-context";
+import Link from "next/link";
 
 export default function DashboardPage() {
+  const { user, isGuest } = useAuth();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -30,8 +33,10 @@ export default function DashboardPage() {
     );
   }
 
+  const startingWealth = user?.initialWealth || 100000;
+
   const summary = data?.portfolio_summary ?? {
-    total_value_usd: 2842109.42,
+    total_value_usd: startingWealth,
     unrealized_gain_loss_pct: 12.4,
     risk_profile: "Moderate 64/100",
     esg_alignment_score: 88,
@@ -55,8 +60,22 @@ export default function DashboardPage() {
 
         {/* ── Dashboard Content ── */}
         <div className="p-8 space-y-8 overflow-y-auto">
-
-          {/* Hero Stats */}
+          {isGuest ? (
+            <div className="p-8 mt-20 rounded-3xl glass border border-white/5 text-center space-y-4 max-w-lg mx-auto shadow-2xl">
+               <div className="mx-auto h-20 w-20 rounded-2xl bg-destructive/10 border border-destructive/20 flex items-center justify-center mb-6">
+                 <Lock className="h-10 w-10 text-destructive" />
+               </div>
+               <h2 className="text-2xl font-bold tracking-[-0.04em] text-foreground">GUEST MODE LOCKED</h2>
+               <p className="text-muted-foreground text-sm px-4">Create a permanent account and define your initial wealth to unlock live institutional portfolio tracking.</p>
+               <div className="pt-6">
+                 <Link href="/profile" className="px-8 py-4 bg-primary text-primary-foreground font-bold uppercase tracking-widest text-xs rounded-xl inline-flex items-center gap-2 hover:opacity-90 transition-all">
+                   Secure Account Now
+                 </Link>
+               </div>
+            </div>
+          ) : (
+            <>
+              {/* Hero Stats */}
           <div className="flex flex-col md:flex-row items-end justify-between gap-6 pb-2">
             <div className="space-y-1">
               <span className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">
@@ -136,6 +155,8 @@ export default function DashboardPage() {
           </div>
 
           <HoldingsHeatMap />
+            </>
+          )}
         </div>
       </div>
     </main>

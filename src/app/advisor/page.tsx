@@ -40,6 +40,39 @@ export default function AdvisorPage() {
     }
   }, [messages, isTyping]);
 
+  useEffect(() => {
+    const handoff = localStorage.getItem("avkast_ai_handoff");
+    if (handoff) {
+      try {
+        const data = JSON.parse(handoff);
+        localStorage.removeItem("avkast_ai_handoff");
+        
+        const handoffMsg: Message = {
+           role: "user",
+           content: `[SYSTEM HANDOFF: MONTE CARLO SIMULATION]\nPortfolio: ${data.portfolio.join(", ")}\nInitial Capital: $${data.initialInvestment.toLocaleString()}\nTime Horizon: ${data.years} Years\nProjected Median Return (50th %ile): $${Math.floor(data.projectedReturn).toLocaleString()}\nEstimated CAGR: ${(data.cagr * 100).toFixed(2)}%\nEstimated Volatility: ${(data.volatility * 100).toFixed(2)}%\n\nPlease provide a short analysis of these possible returns.`,
+           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        };
+        
+        setMessages(prev => [...prev, handoffMsg]);
+        setIsTyping(true);
+
+        setTimeout(() => {
+          const assistantReply: Message = {
+            role: "assistant",
+            content: `The mathematical simulation projects a median end-value of $${Math.floor(data.projectedReturn).toLocaleString()} over ${data.years} years. Given the combined volatility of ${(data.volatility * 100).toFixed(2)}%, the portfolio exhibits a robust risk-adjusted profile. I recommend adding counter-cyclical assets to hedge against the 5th percentile tail risk.`,
+            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            rationale: "Swarm logic analyzed the sandbox parameters and identified volatility drag."
+          };
+          setMessages(prev => [...prev, assistantReply]);
+          setIsTyping(false);
+        }, 2000);
+        
+      } catch (e) {
+        console.error("Failed to parse AI handoff context", e);
+      }
+    }
+  }, []);
+
   const handleSend = () => {
     if (!input.trim()) return;
 
@@ -76,11 +109,11 @@ export default function AdvisorPage() {
           leftContent={
             <div className="flex items-center gap-3">
                <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
-               <h1 className="text-xl font-bold tracking-tight text-foreground">AI ADVISOR: NEURAL LOGIC V4.2</h1>
+               <h1 className="text-xl font-bold tracking-tight text-foreground whitespace-nowrap truncate">AI ADVISOR: NEURAL LOGIC V4.2</h1>
             </div>
           }
           rightContent={
-            <div className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest pr-4 border-r border-white/10">
+            <div className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest pr-4 border-r border-white/10 whitespace-nowrap shrink-0">
               Latency: 42ms | Swarm Active
             </div>
           }

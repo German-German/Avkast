@@ -12,6 +12,8 @@ export default function AuthPage() {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [initialWealth, setInitialWealth] = useState("100000");
+  const [preferredMarkets, setPreferredMarkets] = useState("Technology, Finance");
   const [showPw, setShowPw] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -24,7 +26,7 @@ export default function AuthPage() {
 
     const url = tab === "signup" ? "/api/auth/signup" : "/api/auth/signin";
     const body = tab === "signup"
-      ? { username, email, password }
+      ? { username, email, password, initialWealth: Number(initialWealth), preferredMarkets: preferredMarkets.split(',').map(s=>s.trim()) }
       : { email, password };
 
     try {
@@ -120,6 +122,37 @@ export default function AuthPage() {
                     onChange={e => setUsername(e.target.value)}
                     placeholder="Choose a username"
                     className="w-full bg-white/5 border border-white/10 rounded-lg py-3 pl-10 pr-4 text-sm focus:outline-none focus:ring-1 focus:ring-primary/50 transition-all"
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Wealth & Preferences — signup only */}
+            {tab === "signup" && (
+              <div className="grid grid-cols-2 gap-4 mt-2">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Initial Wealth</label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-bold">$</span>
+                    <input
+                      type="number"
+                      required
+                      value={initialWealth}
+                      onChange={e => setInitialWealth(e.target.value)}
+                      placeholder="e.g. 100000"
+                      className="w-full bg-white/5 border border-white/10 rounded-lg py-3 pl-8 pr-4 text-sm focus:outline-none focus:ring-1 focus:ring-primary/50 transition-all font-mono"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Markets</label>
+                  <input
+                    type="text"
+                    required
+                    value={preferredMarkets}
+                    onChange={e => setPreferredMarkets(e.target.value)}
+                    placeholder="Tech, AI, Banks..."
+                    className="w-full bg-white/5 border border-white/10 rounded-lg py-3 px-4 text-sm focus:outline-none focus:ring-1 focus:ring-primary/50 transition-all"
                   />
                 </div>
               </div>

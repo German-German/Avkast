@@ -3,7 +3,7 @@ import { getDb, hashPassword, createSession } from "@/lib/db";
 
 export async function POST(request: Request) {
   try {
-    const { username, email, password } = await request.json();
+    const { username, email, password, initialWealth, preferredMarkets } = await request.json();
 
     if (!username || !email || !password) {
       return NextResponse.json({ error: "Username, email, and password are required." }, { status: 400 });
@@ -29,8 +29,8 @@ export async function POST(request: Request) {
     const userId = crypto.randomUUID();
 
     db.prepare(
-      "INSERT INTO users (id, username, email, password_hash, salt) VALUES (?, ?, ?, ?, ?)"
-    ).run(userId, username, email.toLowerCase(), hash, salt);
+      "INSERT INTO users (id, username, email, password_hash, salt, initial_wealth, preferred_markets) VALUES (?, ?, ?, ?, ?, ?, ?)"
+    ).run(userId, username, email.toLowerCase(), hash, salt, initialWealth ? Number(initialWealth) : 0, preferredMarkets ? JSON.stringify(preferredMarkets) : "[]");
 
     const token = createSession(userId);
 

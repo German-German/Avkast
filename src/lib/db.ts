@@ -23,6 +23,8 @@ function initTables(db: Database.Database) {
       email TEXT NOT NULL UNIQUE,
       password_hash TEXT NOT NULL,
       salt TEXT NOT NULL,
+      initial_wealth REAL DEFAULT 0,
+      preferred_markets TEXT DEFAULT '',
       created_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
 
@@ -47,6 +49,9 @@ function initTables(db: Database.Database) {
       UNIQUE(user_id, ticker)
     );
   `);
+
+  try { db.exec("ALTER TABLE users ADD COLUMN initial_wealth REAL DEFAULT 0;"); } catch (e) { /* ignore if exists */ }
+  try { db.exec("ALTER TABLE users ADD COLUMN preferred_markets TEXT DEFAULT '';"); } catch (e) { /* ignore if exists */ }
 }
 
 // ── Password helpers ────────────────────────────────────────
@@ -82,10 +87,10 @@ export function createSession(userId: string | null, isGuest: boolean = false): 
   return token;
 }
 
-export function getSessionUser(token: string): { id: string; username: string; email: string; isGuest: boolean } | null {
+export function getSessionUser(token: string): { id: string; username: string; email: string; isGuest: boolean; initialWealth?: number; preferredMarkets?: string } | null {
   const db = getDb();
   const session = db.prepare(
-    `SELECT s.user_id, s.is_guest, s.expires_at, u.username, u.email
+    `SELECT s.user_id, s.is_guest, s.expires_at, u.username, u.email, u.initial_wealth, u.preferred_markets
      FROM sessions s LEFT JOIN users u ON s.user_id = u.id
      WHERE s.token = ?`
   ).get(token) as any;
@@ -105,6 +110,8 @@ export function getSessionUser(token: string): { id: string; username: string; e
     username: session.username,
     email: session.email,
     isGuest: false,
+    initialWealth: session.initial_wealth,
+    preferredMarkets: session.preferred_markets,
   };
 }
 

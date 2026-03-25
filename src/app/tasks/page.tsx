@@ -77,10 +77,10 @@ export default function TasksPage() {
       <div className="flex-1 flex flex-col min-w-0">
         <Topbar
           leftContent={
-            <h1 className="text-xl font-bold tracking-tight text-foreground">SWARM COMMAND: TASKS & SIGNALS</h1>
+            <h1 className="text-xl font-bold tracking-tight text-foreground whitespace-nowrap truncate">SWARM COMMAND: TASKS & SIGNALS</h1>
           }
           rightContent={
-            <div className="flex items-center gap-2 pr-4 border-r border-white/10">
+            <div className="flex items-center gap-2 pr-4 border-r border-white/10 whitespace-nowrap shrink-0">
               <span className="text-[10px] font-mono text-muted-foreground uppercase">Sync Status:</span>
               <span className="flex items-center gap-1.5 text-[10px] font-bold text-accent uppercase">
                 <div className="h-1.5 w-1.5 rounded-full bg-accent animate-pulse" /> Live Connected

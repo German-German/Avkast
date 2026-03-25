@@ -8,6 +8,8 @@ interface User {
   username: string;
   email: string;
   isGuest?: boolean;
+  initialWealth?: number;
+  preferredMarkets?: string;
 }
 
 interface AuthContextValue {

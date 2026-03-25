@@ -3,7 +3,8 @@
 import React, { useState, useMemo } from "react";
 import { Sidebar } from "@/components/dashboard/sidebar";
 import { Topbar } from "@/components/dashboard/topbar";
-import { Activity, Plus, FileBarChart, PieChart, Info, Play, Trash2 } from "lucide-react";
+import { Activity, Plus, FileBarChart, PieChart, Info, Play, Trash2, Bot } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 
 // Mock database of assets with mathematical parameters
@@ -24,6 +25,24 @@ export default function SandboxPage() {
   const [initialInvestment, setInitialInvestment] = useState(100000);
   const [years, setYears] = useState(10);
   const [draggedItem, setDraggedItem] = useState<string | null>(null);
+  const router = useRouter();
+
+  const handleExportToAI = () => {
+    if (!simulation) return;
+    const exportData = {
+      type: "SANDBOX_SIMULATION",
+      portfolio: portfolio.map(p => p.ticker),
+      cagr: simulation.aggCagr,
+      volatility: simulation.aggVol,
+      initialInvestment,
+      years,
+      projectedReturn: simulation.paths.median[simulation.paths.median.length - 1]
+    };
+    
+    // Save to local storage for the AI Advisor to pick up
+    localStorage.setItem("avkast_ai_handoff", JSON.stringify(exportData));
+    router.push("/advisor");
+  };
 
   // HTML5 Drag and Drop handlers
   const handleDragStart = (e: React.DragEvent, ticker: string) => {
@@ -262,11 +281,14 @@ export default function SandboxPage() {
                       </svg>
                       
                       {/* Tooltips/Labels on right side */}
-                      <div className="absolute right-0 top-0 bottom-0 flex flex-col justify-between translate-x-full pl-4 py-4 w-32 border-l border-white/10 pointer-events-none">
+                      <div className="absolute right-0 top-0 bottom-0 flex flex-col justify-between translate-x-full pl-6 py-4 w-40 border-l border-white/10 pointer-events-none">
                         <div className="space-y-1">
                           <div className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest">95th %ile</div>
                           <div className="text-sm font-bold text-foreground">
                             ${Math.floor(simulation.paths.high[simulation.paths.high.length-1]).toLocaleString()}
+                          </div>
+                          <div className="text-[10px] font-mono text-accent">
+                            +${Math.floor(simulation.paths.high[simulation.paths.high.length-1] - initialInvestment).toLocaleString()} / +{(((simulation.paths.high[simulation.paths.high.length-1] - initialInvestment)/initialInvestment)*100).toFixed(0)}%
                           </div>
                         </div>
                         <div className="space-y-1">
@@ -274,12 +296,24 @@ export default function SandboxPage() {
                           <div className="text-base font-bold text-primary drop-shadow-[0_0_8px_rgba(112,130,56,0.5)]">
                             ${Math.floor(simulation.paths.median[simulation.paths.median.length-1]).toLocaleString()}
                           </div>
+                          <div className="text-[10px] font-mono text-primary">
+                            +${Math.floor(simulation.paths.median[simulation.paths.median.length-1] - initialInvestment).toLocaleString()} / +{(((simulation.paths.median[simulation.paths.median.length-1] - initialInvestment)/initialInvestment)*100).toFixed(0)}%
+                          </div>
                         </div>
                         <div className="space-y-1">
                           <div className="text-[10px] text-destructive uppercase font-bold tracking-widest">5th %ile</div>
                           <div className="text-sm font-bold text-destructive">
                             ${Math.floor(simulation.paths.low[simulation.paths.low.length-1]).toLocaleString()}
                           </div>
+                          {(() => {
+                             const gain = simulation.paths.low[simulation.paths.low.length-1] - initialInvestment;
+                             const roi = (gain / initialInvestment) * 100;
+                             return (
+                               <div className={cn("text-[10px] font-mono", gain >= 0 ? "text-accent" : "text-destructive")}>
+                                 {gain >= 0 ? "+" : ""}${Math.floor(gain).toLocaleString()} / {roi >= 0 ? "+" : ""}{roi.toFixed(0)}%
+                               </div>
+                             );
+                          })()}
                         </div>
                       </div>
 
@@ -289,29 +323,38 @@ export default function SandboxPage() {
                 
                 {/* Configuration Footer */}
                 {simulation && (
-                  <div className="p-6 bg-white/[0.01] border-t border-white/5 flex gap-8">
-                    <div className="space-y-2">
-                       <label className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Initial Capital</label>
-                       <div className="flex items-center gap-2">
-                         <span className="text-sm text-muted-foreground">$</span>
+                  <div className="p-6 bg-white/[0.01] border-t border-white/5 flex flex-wrap items-end justify-between gap-8">
+                    <div className="flex gap-8 flex-wrap">
+                      <div className="space-y-2">
+                         <label className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Initial Capital</label>
+                         <div className="flex items-center gap-2">
+                           <span className="text-sm text-muted-foreground">$</span>
+                           <input 
+                             type="number" 
+                             value={initialInvestment} 
+                             onChange={e => setInitialInvestment(Number(e.target.value))}
+                             className="bg-transparent text-sm font-bold text-foreground border-b border-border focus:outline-none focus:border-primary w-24"
+                           />
+                         </div>
+                      </div>
+                      <div className="space-y-2">
+                         <label className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Time Horizon (Years)</label>
                          <input 
-                           type="number" 
-                           value={initialInvestment} 
-                           onChange={e => setInitialInvestment(Number(e.target.value))}
-                           className="bg-transparent text-sm font-bold text-foreground border-b border-border focus:outline-none focus:border-primary w-24"
+                           type="range" min="1" max="30" 
+                           value={years} 
+                           onChange={e => setYears(Number(e.target.value))}
+                           className="w-48 accent-primary h-1 bg-white/10 rounded-full appearance-none mt-2"
                          />
-                       </div>
+                         <div className="text-xs font-bold text-primary">{years} Years</div>
+                      </div>
                     </div>
-                    <div className="space-y-2">
-                       <label className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Time Horizon (Years)</label>
-                       <input 
-                         type="range" min="1" max="30" 
-                         value={years} 
-                         onChange={e => setYears(Number(e.target.value))}
-                         className="w-48 accent-primary h-1 bg-white/10 rounded-full appearance-none mt-2"
-                       />
-                       <div className="text-xs font-bold text-primary">{years} Years</div>
-                    </div>
+                    
+                    <button 
+                      onClick={handleExportToAI}
+                      className="px-6 py-3 bg-primary text-primary-foreground font-bold uppercase tracking-widest text-xs rounded-xl flex items-center gap-2 hover:opacity-90 transition-all shrink-0"
+                    >
+                      <Bot className="h-4 w-4" /> Save to AI Advisor
+                    </button>
                   </div>
                 )}
               </div>
