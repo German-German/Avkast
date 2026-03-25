@@ -1,0 +1,38 @@
+import { NextResponse } from "next/server";
+import { getDb, verifyPassword, createSession } from "@/lib/db";
+
+export async function POST(request: Request) {
+  try {
+    const { email, password } = await request.json();
+
+    if (!email || !password) {
+      return NextResponse.json({ error: "Email and password are required." }, { status: 400 });
+    }
+
+    const db = getDb();
+    const user = db.prepare("SELECT id, username, email, password_hash, salt FROM users WHERE email = ?").get(email.toLowerCase()) as any;
+
+    if (!user || !verifyPassword(password, user.password_hash, user.salt)) {
+      return NextResponse.json({ error: "Invalid email or password." }, { status: 401 });
+    }
+
+    const token = createSession(user.id);
+
+    const response = NextResponse.json({
+      message: "Signed in successfully.",
+      user: { id: user.id, username: user.username, email: user.email },
+    });
+
+    response.cookies.set("avkast_session", token, {
+      httpOnly: true,
+      sameSite: "lax",
+      path: "/",
+      maxAge: 30 * 24 * 60 * 60,
+    });
+
+    return response;
+  } catch (error: any) {
+    console.error("[Auth Signin]", error);
+    return NextResponse.json({ error: "Internal server error." }, { status: 500 });
+  }
+}
