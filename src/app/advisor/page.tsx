@@ -6,6 +6,7 @@ import { Send, User, Bot, Sparkles, Loader2, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Topbar } from "@/components/dashboard/topbar";
 import { ExplainableAI } from "@/components/shared/explainable-ai";
+import { useAuth } from "@/contexts/auth-context";
 
 const RANDOM_RESPONSES = [
   "Based on current macro-liquidity shifts, I recommend increasing exposure to tech-heavy ETFs. The risk-adjusted return profile looks optimal for the next quarter.",
@@ -23,10 +24,11 @@ interface Message {
 }
 
 export default function AdvisorPage() {
+  const { user, isGuest } = useAuth();
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
-      content: "Good morning. I'm synchronized with the Avkast Swarm. How can I assist your wealth strategy today?",
+      content: `Good morning. I'm synchronized with the Avkast Swarm. I see your ${isGuest ? "Trial" : "Institutional"} account is active. How can I assist your wealth strategy today?`,
       timestamp: "08:32 AM",
     }
   ]);
@@ -86,14 +88,26 @@ export default function AdvisorPage() {
     setInput("");
     setIsTyping(true);
 
-    // Randomize Response (Future Dev Idea)
+    // Contextual Response Logic
     setTimeout(() => {
-      const randomContent = RANDOM_RESPONSES[Math.floor(Math.random() * RANDOM_RESPONSES.length)];
+      const wealth = user?.initialWealth || 100000;
+      const markets = user?.preferredMarkets ? (typeof user.preferredMarkets === 'string' ? JSON.parse(user.preferredMarkets) : user.preferredMarkets) : [];
+      const primaryMarket = markets[0] || "Global Tech";
+
+      const dynamicResponses = [
+        `Given your focus on ${primaryMarket}, the swarm suggests a slight overweight position in defensive assets while maintaining your $${wealth.toLocaleString()} liquidity baseline.`,
+        `Analyzing the $${wealth.toLocaleString()} simulation matrix... The probability of alpha in ${primaryMarket} is currently 0.74 based on recursive sentiment analysis.`,
+        `I recommend hedging your current holdings. Your declared interest in ${markets.join("/")} shows a volatility drift of 4.2% relative to the benchmark.`,
+        `The Avkast Swarm has identified a buy signal in a secondary market related to ${primaryMarket}. Shall we run a stress test for your portfolio?`,
+      ];
+
+      const content = dynamicResponses[Math.floor(Math.random() * dynamicResponses.length)];
+      
       const assistantMessage: Message = {
         role: "assistant",
-        content: randomContent,
+        content,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        rationale: "Analysis of recursive swarm intelligence cross-referenced with your explicit preferences."
+        rationale: `Swarm analysis cross-referenced with your $${wealth.toLocaleString()} capital and ${primaryMarket} sector focus.`
       };
       setMessages(prev => [...prev, assistantMessage]);
       setIsTyping(false);

@@ -36,13 +36,17 @@ export default function AuthPage() {
         body: JSON.stringify(body),
       });
       const data = await res.json();
+      console.log(`[AuthPage] ${tab} response:`, data);
       if (!res.ok) {
         setError(data.error || "Something went wrong.");
         return;
       }
+      console.log("[AuthPage] Refreshing context...");
       await refresh();
+      console.log("[AuthPage] Navigating to /welcome");
       router.push("/welcome");
-    } catch {
+    } catch (err) {
+      console.error(`[AuthPage] ${tab} error:`, err);
       setError("Network error. Please try again.");
     } finally {
       setLoading(false);
@@ -53,14 +57,20 @@ export default function AuthPage() {
     setLoading(true);
     setError("");
     try {
+      console.log("[AuthPage] Starting guest session...");
       const res = await fetch("/api/auth/guest", { method: "POST" });
       if (res.ok) {
+        const data = await res.json();
+        console.log("[AuthPage] Guest success:", data);
         await refresh();
+        console.log("[AuthPage] Navigating to dashboard");
         router.push("/");
       } else {
+        console.warn("[AuthPage] Guest failure:", res.status);
         setError("Failed to start guest session.");
       }
-    } catch {
+    } catch (err) {
+      console.error("[AuthPage] Guest error:", err);
       setError("Network error.");
     } finally {
       setLoading(false);

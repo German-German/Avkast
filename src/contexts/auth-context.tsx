@@ -30,7 +30,7 @@ const AuthContext = createContext<AuthContextValue>({
 
 export const useAuth = () => useContext(AuthContext);
 
-const PUBLIC_PATHS = ["/auth"];
+const PUBLIC_PATHS = ["/auth", "/welcome"];
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -43,11 +43,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const res = await fetch("/api/auth/me");
       if (res.ok) {
         const data = await res.json();
+        console.log("[AuthContext] fetchUser success:", data.user);
         setUser(data.user);
       } else {
+        console.warn("[AuthContext] fetchUser failed:", res.status);
         setUser(null);
       }
-    } catch {
+    } catch (err) {
+      console.error("[AuthContext] fetchUser error:", err);
       setUser(null);
     } finally {
       setIsLoading(false);
@@ -61,7 +64,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (isLoading) return;
     const isPublic = PUBLIC_PATHS.some(p => pathname.startsWith(p));
+    console.log("[AuthContext] Navigation guard check:", { pathname, user: user?.id, isPublic });
     if (!user && !isPublic) {
+      console.log("[AuthContext] Redirecting to /auth");
       router.replace("/auth");
     }
   }, [user, isLoading, pathname, router]);

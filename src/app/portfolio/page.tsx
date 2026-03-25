@@ -1,34 +1,13 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Sidebar } from "@/components/dashboard/sidebar";
 import { cn } from "@/lib/utils";
-import { TrendingUp, TrendingDown, BarChart3, RefreshCw, Eye, EyeOff, Lock } from "lucide-react";
+import { Activity, TrendingUp, TrendingDown, PieChart, BarChart3, Clock, ArrowUpRight, Lock } from "lucide-react";
 import { Topbar } from "@/components/dashboard/topbar";
 import { useAuth } from "@/contexts/auth-context";
+import { generateUserPortfolio } from "@/lib/portfolio-engine";
 import Link from "next/link";
-
-const INITIAL_HOLDINGS = [
-  { ticker: "AAPL", name: "Apple Inc.", sector: "Technology", shares: 340, price: 189.45, costBasis: 142.3, weight: 12.4, change: +2.31 },
-  { ticker: "MSFT", name: "Microsoft Corp.", sector: "Technology", shares: 210, price: 415.2, costBasis: 290.0, weight: 11.8, change: +0.87 },
-  { ticker: "BRK.B", name: "Berkshire Hathaway", sector: "Financials", shares: 580, price: 381.6, costBasis: 312.4, weight: 10.2, change: -0.33 },
-  { ticker: "NVDA", name: "NVIDIA Corp.", sector: "Technology", shares: 120, price: 875.4, costBasis: 490.0, weight: 9.8, change: +4.12 },
-  { ticker: "V", name: "Visa Inc.", sector: "Financials", shares: 430, price: 278.9, costBasis: 240.0, weight: 8.4, change: +0.61 },
-  { ticker: "BND", name: "Vanguard Total Bond", sector: "Fixed Income", shares: 1200, price: 72.3, costBasis: 75.1, weight: 7.1, change: -0.12 },
-  { ticker: "AGG", name: "iShares Core US Bond", sector: "Fixed Income", shares: 980, price: 95.4, costBasis: 98.2, weight: 6.8, change: -0.08 },
-  { ticker: "GLD", name: "SPDR Gold Shares", sector: "Commodities", shares: 280, price: 185.6, costBasis: 167.3, weight: 5.9, change: +1.04 },
-  { ticker: "VNQ", name: "Vanguard Real Estate", sector: "Real Estate", shares: 640, price: 84.2, costBasis: 92.4, weight: 5.2, change: -0.55 },
-  { ticker: "NEE", name: "NextEra Energy", sector: "Utilities", shares: 510, price: 62.4, costBasis: 78.5, weight: 4.8, change: -0.71 },
-];
-
-const ALLOCATION = [
-  { label: "Technology", pct: 34, color: "#708238" },
-  { label: "Fixed Income", pct: 14, color: "#10B981" },
-  { label: "Financials", pct: 18, color: "#3B82F6" },
-  { label: "Commodities", pct: 12, color: "#F59E0B" },
-  { label: "Real Estate", pct: 10, color: "#8B5CF6" },
-  { label: "Utilities", pct: 12, color: "#EC4899" },
-];
 
 export default function PortfolioPage() {
   const { user, isGuest } = useAuth();
@@ -37,29 +16,23 @@ export default function PortfolioPage() {
   const [sort, setSort] = useState<"weight" | "change" | "gain">("weight");
   
   const startingWealth = user?.initialWealth || 100000;
-  
-  const scaledHoldings = INITIAL_HOLDINGS.map(h => ({
-    ...h,
-    shares: (startingWealth * (h.weight / 100)) / h.price,
-    costBasis: h.price * 0.95 // mock historical entry
-  }));
+  const preferredMarkets = user?.preferredMarkets ? (typeof user.preferredMarkets === 'string' ? JSON.parse(user.preferredMarkets) : user.preferredMarkets) : [];
 
-  const [holdings, setHoldings] = useState(scaledHoldings);
+  const holdings = useMemo(() => {
+    if (isGuest) return [];
+    return generateUserPortfolio(startingWealth, preferredMarkets);
+  }, [startingWealth, preferredMarkets, isGuest]);
 
-  // Live price simulation loop
+  // Live price simulation loop (only for logged-in users)
   useEffect(() => {
+    if (isGuest) return;
     const interval = setInterval(() => {
-      setHoldings(prev => prev.map(asset => {
-        // Random drift between -0.5% and +0.5%
-        const drift = (Math.random() - 0.5) * 0.01;
-        const newPrice = asset.price * (1 + drift);
-        const newChange = asset.change + (drift * 100);
-        return { ...asset, price: newPrice, change: newChange };
-      }));
+      // This effect is now disabled as holdings are generated once.
+      // If live price simulation is desired, it needs to be integrated with generateUserPortfolio or a separate state.
     }, 15000); // 15 seconds
     
     return () => clearInterval(interval);
-  }, []);
+  }, [isGuest]);
 
   const sorted = [...holdings].sort((a, b) => {
     if (sort === "weight") return b.weight - a.weight;
@@ -70,11 +43,23 @@ export default function PortfolioPage() {
   });
 
   const totalValue = holdings.reduce((sum, h) => sum + (h.price * h.shares), 0);
-  const prevTotalValue = scaledHoldings.reduce((sum, h) => sum + (h.price * h.shares), 0);
-  const dayChange = totalValue - prevTotalValue + (startingWealth * 0.005); // base daily positive drift
-  const ytdReturn = 12.4 + ((totalValue - prevTotalValue) / prevTotalValue * 100);
+  const totalCost = holdings.reduce((sum, h) => sum + (h.costBasis * h.shares), 0);
+  const totalGain = totalValue - totalCost;
+  const totalGainPct = (totalGain / totalCost) * 100;
 
-  const mask = (val: string) => (hideValues ? "••••••" : val);
+  // Derive allocation from actual holdings
+  const sectorMap: Record<string, number> = {};
+  holdings.forEach(h => {
+    sectorMap[h.sector] = (sectorMap[h.sector] || 0) + (h.weight);
+  });
+
+  const ALLOCATION = Object.entries(sectorMap).map(([label, pct], i) => ({
+    label,
+    pct,
+    color: [`#708238`, `#A4C639`, `#556B2F`, `#8FBC8F`, `#2E8B57`][i % 5]
+  }));
+
+  const mask = (val: string | number) => hideValues ? "••••••" : val;
 
   return (
     <main className="flex min-h-screen bg-background w-full">
@@ -95,10 +80,10 @@ export default function PortfolioPage() {
                 className="h-9 w-9 flex items-center justify-center rounded-xl hover:bg-white/5 text-muted-foreground transition-all"
                 title="Toggle value visibility"
               >
-                {hideValues ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                {hideValues ? <Lock className="h-4 w-4" /> : <ArrowUpRight className="h-4 w-4" />}
               </button>
               <button className="flex items-center gap-2 h-9 px-4 rounded-xl bg-primary/10 border border-primary/20 text-primary text-xs font-bold uppercase tracking-tight hover:bg-primary/20 transition-all">
-                <RefreshCw className="h-3.5 w-3.5" /> Rebalance
+                <Activity className="h-3.5 w-3.5" /> Rebalance
               </button>
             </div>
           }
@@ -121,19 +106,27 @@ export default function PortfolioPage() {
           ) : (
             <>
               {/* KPI Row */}
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
-                {[
-                  { label: "Total Value", value: mask(`$${totalValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}`), sub: "As of today", positive: true },
-                  { label: "Day Change", value: mask(`+$${Math.abs(dayChange).toLocaleString(undefined, { maximumFractionDigits: 0 })}`), sub: "+0.50% today", positive: dayChange >= 0 },
-                  { label: "YTD Return", value: mask(`+${ytdReturn.toFixed(2)}%`), sub: "vs Benchmark +8.2%", positive: true },
-                  { label: "Buying Power", value: mask(`$${(startingWealth * 0.15).toLocaleString(undefined, { maximumFractionDigits: 0 })}`), sub: "Cash available", positive: true },
-                ].map(kpi => (
-                  <div key={kpi.label} className="p-5 rounded-xl glass space-y-2">
-                    <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{kpi.label}</div>
-                    <div className={cn("text-2xl font-bold tracking-tighter", kpi.positive ? "text-foreground" : "text-destructive")}>{kpi.value}</div>
-                    <div className="text-[10px] text-muted-foreground">{kpi.sub}</div>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="p-4 rounded-xl glass border border-white/5 space-y-1">
+                  <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Total Equity</div>
+                  <div className="text-xl font-bold text-foreground">${mask(totalValue.toLocaleString(undefined, { maximumFractionDigits: 0 }))}</div>
+                </div>
+                <div className="p-4 rounded-xl glass border border-white/5 space-y-1">
+                  <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Total Gain/Loss</div>
+                  <div className={cn("text-xl font-bold", totalGain >= 0 ? "text-accent" : "text-destructive")}>
+                    {mask(`${totalGain >= 0 ? "+" : "-"}$${Math.abs(totalGain).toLocaleString(undefined, { maximumFractionDigits: 0 })}`)}
                   </div>
-                ))}
+                </div>
+                <div className="p-4 rounded-xl glass border border-white/5 space-y-1">
+                  <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Return Percentage</div>
+                  <div className={cn("text-xl font-bold", totalGainPct >= 0 ? "text-accent" : "text-destructive")}>
+                    {mask(`${totalGainPct >= 0 ? "+" : ""}${totalGainPct.toFixed(2)}%`)}
+                  </div>
+                </div>
+                <div className="p-4 rounded-xl glass border border-white/5 space-y-1">
+                  <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Risk Rating</div>
+                  <div className="text-xl font-bold text-primary">B+ MODERATE</div>
+                </div>
               </div>
 
           {/* Tab Bar */}
@@ -248,19 +241,15 @@ export default function PortfolioPage() {
               </div>
               <div className="p-6 rounded-xl glass space-y-4">
                 <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Asset Class</h3>
-                {[
-                  { label: "Equities", pct: 68, value: "$1,932,634" },
-                  { label: "Fixed Income", pct: 20, value: "$568,421" },
-                  { label: "Commodities", pct: 12, value: "$341,054" },
-                ].map(a => (
-                  <div key={a.label} className="flex items-center justify-between p-4 rounded-lg bg-white/[0.03] border border-white/5">
-                    <div>
-                      <div className="text-xs font-bold text-foreground">{a.label}</div>
-                      <div className="text-[10px] text-muted-foreground">{mask(a.value)}</div>
+                  {ALLOCATION.map(a => (
+                    <div key={a.label} className="flex items-center justify-between p-4 rounded-lg bg-white/[0.03] border border-white/5">
+                      <div>
+                        <div className="text-xs font-bold text-foreground">{a.label}</div>
+                        <div className="text-[10px] text-muted-foreground">Dynamic Allocation</div>
+                      </div>
+                      <div className="text-2xl font-bold tracking-tighter text-primary">{Math.round(a.pct)}%</div>
                     </div>
-                    <div className="text-2xl font-bold tracking-tighter text-primary">{a.pct}%</div>
-                  </div>
-                ))}
+                  ))}
               </div>
             </div>
           )}
@@ -269,21 +258,24 @@ export default function PortfolioPage() {
           {tab === "performance" && (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
               {[
-                { period: "1 Day", return: "+0.50%", value: "+$14,203", positive: true },
-                { period: "1 Week", return: "+1.82%", value: "+$50,811", positive: true },
-                { period: "1 Month", return: "+3.14%", value: "+$86,400", positive: true },
-                { period: "3 Months", return: "+7.21%", value: "+$191,100", positive: true },
-                { period: "YTD", return: "+12.40%", value: "+$314,000", positive: true },
-                { period: "1 Year", return: "+18.30%", value: "+$438,200", positive: true },
-              ].map(p => (
-                <div key={p.period} className="p-5 rounded-xl glass space-y-3">
-                  <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{p.period}</div>
-                  <div className={cn("text-3xl font-bold tracking-tighter", p.positive ? "text-accent" : "text-destructive")}>
-                    {mask(p.return)}
+                { period: "1 Day", pct: 0.50, positive: true },
+                { period: "1 Week", pct: 1.82, positive: true },
+                { period: "1 Month", pct: 3.14, positive: true },
+                { period: "3 Months", pct: 7.21, positive: true },
+                { period: "YTD", pct: 12.40, positive: true },
+                { period: "1 Year", pct: 18.30, positive: true },
+              ].map(p => {
+                const dollarVal = totalValue * (p.pct / 100);
+                return (
+                  <div key={p.period} className="p-5 rounded-xl glass space-y-3">
+                    <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{p.period}</div>
+                    <div className={cn("text-3xl font-bold tracking-tighter", p.positive ? "text-accent" : "text-destructive")}>
+                      {mask(`+${p.pct.toFixed(2)}%`)}
+                    </div>
+                    <div className="text-xs text-muted-foreground font-medium">{mask(`+$${dollarVal.toLocaleString(undefined, { maximumFractionDigits: 0 })}`)} net</div>
                   </div>
-                  <div className="text-xs text-muted-foreground font-medium">{mask(p.value)} net</div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
             </>

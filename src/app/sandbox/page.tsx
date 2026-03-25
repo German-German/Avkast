@@ -5,6 +5,7 @@ import { Sidebar } from "@/components/dashboard/sidebar";
 import { Topbar } from "@/components/dashboard/topbar";
 import { Activity, Plus, FileBarChart, PieChart, Info, Play, Trash2, Bot } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/contexts/auth-context";
 import { cn } from "@/lib/utils";
 
 // Mock database of assets with mathematical parameters
@@ -21,8 +22,9 @@ const AVAILABLE_ASSETS = [
 ];
 
 export default function SandboxPage() {
+  const { user } = useAuth();
   const [portfolio, setPortfolio] = useState<typeof AVAILABLE_ASSETS>([]);
-  const [initialInvestment, setInitialInvestment] = useState(100000);
+  const [initialInvestment, setInitialInvestment] = useState(user?.initialWealth || 100000);
   const [years, setYears] = useState(10);
   const [draggedItem, setDraggedItem] = useState<string | null>(null);
   const router = useRouter();

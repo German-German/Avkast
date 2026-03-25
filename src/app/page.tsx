@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { Sidebar } from "@/components/dashboard/sidebar";
 import { MetricCard } from "@/components/dashboard/metric-card";
@@ -11,6 +11,7 @@ import { Topbar } from "@/components/dashboard/topbar";
 import { Loader2, Lock } from "lucide-react";
 import { useAuth } from "@/contexts/auth-context";
 import Link from "next/link";
+import { generateUserPortfolio } from "@/lib/portfolio-engine";
 
 export default function DashboardPage() {
   const { user, isGuest } = useAuth();
@@ -34,9 +35,19 @@ export default function DashboardPage() {
   }
 
   const startingWealth = user?.initialWealth || 100000;
+  const preferredMarkets = user?.preferredMarkets ? (typeof user.preferredMarkets === 'string' ? JSON.parse(user.preferredMarkets) : user.preferredMarkets) : [];
+
+  const portfolio = useMemo(() => {
+    if (isGuest) return [];
+    return generateUserPortfolio(startingWealth, preferredMarkets);
+  }, [startingWealth, preferredMarkets, isGuest]);
+
+  const totalValue = portfolio.reduce((sum, h) => sum + (h.price * h.shares), 0);
+  const dayChangePct = portfolio.reduce((sum, h) => sum + (h.change * (h.weight / 100)), 0);
+  const dayChangeUsd = totalValue * (dayChangePct / 100);
 
   const summary = data?.portfolio_summary ?? {
-    total_value_usd: startingWealth,
+    total_value_usd: totalValue || startingWealth,
     unrealized_gain_loss_pct: 12.4,
     risk_profile: "Moderate 64/100",
     esg_alignment_score: 88,
@@ -82,7 +93,7 @@ export default function DashboardPage() {
                 Total Portfolio Value
               </span>
               <h1 className="text-5xl font-bold tracking-tighter text-foreground flex items-baseline gap-1">
-                ${summary.total_value_usd.toLocaleString()}
+                ${summary.total_value_usd.toLocaleString(undefined, { maximumFractionDigits: 0 })}
                 <span className="text-2xl text-muted-foreground">.00</span>
                 <span
                   className={cn(
@@ -102,12 +113,16 @@ export default function DashboardPage() {
             <div className="flex items-end gap-8">
               <div className="text-right">
                 <div className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">Day Change</div>
-                <div className="text-lg font-bold text-accent">+$14,203</div>
+                <div className={cn("text-lg font-bold", dayChangeUsd >= 0 ? "text-accent" : "text-destructive")}>
+                  {dayChangeUsd >= 0 ? "+" : "-"}${Math.abs(dayChangeUsd).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                </div>
               </div>
               <div className="h-8 w-px bg-white/10" />
               <div className="text-right">
                 <div className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">Buying Power</div>
-                <div className="text-lg font-bold text-foreground">$420,100</div>
+                <div className="text-lg font-bold text-foreground">
+                  ${(startingWealth * 0.15).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                </div>
               </div>
             </div>
           </div>
@@ -131,7 +146,7 @@ export default function DashboardPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             <MetricCard
               label="CASH POSITION"
-              value="$312,040.00"
+              value={`$${(startingWealth * 0.072).toLocaleString(undefined, { maximumFractionDigits: 0 })}`}
               subValue="7.2% of Portfolio"
               change={{ value: "+1.2%", isPositive: true }}
             />

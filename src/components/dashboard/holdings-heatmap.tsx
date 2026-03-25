@@ -1,5 +1,8 @@
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/auth-context";
+import { generateUserPortfolio } from "@/lib/portfolio-engine";
+import { useMemo } from "react";
 
 const MockHeatMapData = [
   { symbol: "AAPL", change: "+4.2%", intensity: "bg-accent/80" },
@@ -17,6 +20,23 @@ const MockHeatMapData = [
 ];
 
 export const HoldingsHeatMap: React.FC = () => {
+  const { user, isGuest } = useAuth();
+
+  const heatmapData = useMemo(() => {
+    if (isGuest) return MockHeatMapData;
+    const wealth = user?.initialWealth || 100000;
+    const markets = user?.preferredMarkets ? (typeof user.preferredMarkets === 'string' ? JSON.parse(user.preferredMarkets) : user.preferredMarkets) : [];
+    const holdings = generateUserPortfolio(wealth, markets);
+    
+    return holdings.map(h => ({
+      symbol: h.ticker,
+      change: `${h.change >= 0 ? "+" : ""}${h.change}%`,
+      intensity: h.change >= 0 
+        ? (h.change > 2 ? "bg-accent/100" : (h.change > 1 ? "bg-accent/60" : "bg-accent/30"))
+        : (h.change < -2 ? "bg-destructive/80" : "bg-destructive/40")
+    }));
+  }, [user, isGuest]);
+
   return (
     <div className="p-6 rounded-xl glass space-y-6">
       <div className="flex items-center justify-between">
@@ -31,12 +51,12 @@ export const HoldingsHeatMap: React.FC = () => {
       </div>
       
       <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
-        {MockHeatMapData.map((item) => (
+        {heatmapData.map((item) => (
           <Link 
             key={item.symbol} 
             href={`/asset/${item.symbol}`}
             className={cn(
-              "aspect-video rounded p-2 flex flex-col justify-between transition-transform hover:scale-105 cursor-pointer",
+              "aspect-video rounded p-2 flex flex-col justify-between transition-transform hover:scale-105 cursor-pointer border border-white/5",
               item.intensity
             )}
           >
