@@ -46,9 +46,11 @@ export const Sidebar: React.FC = () => {
 
       <div className="p-4 space-y-4">
         <div className="p-4 rounded-lg bg-primary/10 border border-primary/20">
-          <button className="w-full py-2.5 px-4 bg-primary text-primary-foreground rounded-md text-xs font-bold uppercase tracking-tight hover:opacity-90 transition-all shadow-sm">
-            + NEW SIMULATION
-          </button>
+          <Link href="/sandbox" className="flex w-full">
+            <button className="w-full py-2.5 px-4 bg-primary text-primary-foreground rounded-md text-xs font-bold uppercase tracking-tight hover:opacity-90 transition-all shadow-sm">
+              + NEW SIMULATION
+            </button>
+          </Link>
         </div>
         
         <div className="space-y-1">
