@@ -26,14 +26,6 @@ export default function DashboardPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading) {
-    return (
-      <div className="flex h-screen w-full items-center justify-center bg-background">
-        <Loader2 className="h-12 w-12 text-primary animate-spin" />
-      </div>
-    );
-  }
-
   const startingWealth = user?.initialWealth || 100000;
   const preferredMarkets = user?.preferredMarkets ? (typeof user.preferredMarkets === 'string' ? JSON.parse(user.preferredMarkets) : user.preferredMarkets) : [];
 
@@ -46,7 +38,15 @@ export default function DashboardPage() {
   const dayChangePct = portfolio.reduce((sum, h) => sum + (h.change * (h.weight / 100)), 0);
   const dayChangeUsd = totalValue * (dayChangePct / 100);
 
-  const summary = data?.portfolio_summary ?? {
+  if (loading) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center bg-background">
+        <Loader2 className="h-12 w-12 text-primary animate-spin" />
+      </div>
+    );
+  }
+
+  const summary = {
     total_value_usd: totalValue || startingWealth,
     unrealized_gain_loss_pct: 12.4,
     risk_profile: "Moderate 64/100",
