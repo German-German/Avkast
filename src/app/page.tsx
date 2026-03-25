@@ -1,11 +1,57 @@
+"use client";
+
+import React, { useEffect, useState } from "react";
 import { Sidebar } from "@/components/dashboard/sidebar";
 import { MetricCard } from "@/components/dashboard/metric-card";
 import { AIInsightCard } from "@/components/dashboard/ai-insight-card";
 import { AssetAllocation } from "@/components/dashboard/asset-allocation";
 import { HoldingsHeatMap } from "@/components/dashboard/holdings-heatmap";
-import { Search, Bell, Settings, UserCircle } from "lucide-react";
+import { Search, Bell, Settings, UserCircle, Loader2 } from "lucide-react";
 
 export default function DashboardPage() {
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await fetch("/api/tasks");
+        if (response.ok) {
+          const result = await response.json();
+          setData(result);
+        }
+      } catch (err) {
+        console.error("Dashboard fetch failed:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center bg-background">
+        <Loader2 className="h-12 w-12 text-primary animate-spin" />
+      </div>
+    );
+  }
+
+  const summary = data?.portfolio_summary || {
+    total_value_usd: 2842109.42,
+    unrealized_gain_loss_pct: 12.4,
+    risk_profile: "Moderate 64/100",
+    esg_alignment_score: 88
+  };
+
+  const topSignal = data?.active_signals?.[0] || {
+    ticker: "Global Tech",
+    action: "BUY",
+    confidence_score: 0.74,
+    reasoning: "Increase exposure to Tech Infrastructure by 4.2% while reducing stagnant retail holdings.",
+    id: "v4.2-b4c9e2"
+  };
+
   return (
     <main className="flex min-h-screen bg-background w-full">
       <Sidebar />
@@ -46,9 +92,13 @@ export default function DashboardPage() {
             <div className="space-y-1">
               <span className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">Total Portfolio Value</span>
               <h1 className="text-5xl font-bold tracking-tighter text-foreground flex items-baseline gap-1">
-                $2,842,109<span className="text-2xl text-muted-foreground">.42</span>
-                <span className="ml-4 text-lg text-accent font-medium flex items-center gap-1">
-                  <span className="text-xs">↗</span> +12.4%
+                ${summary.total_value_usd.toLocaleString()}<span className="text-2xl text-muted-foreground">.00</span>
+                <span className={cn(
+                  "ml-4 text-lg font-medium flex items-center gap-1",
+                  summary.unrealized_gain_loss_pct >= 0 ? "text-accent" : "text-destructive"
+                )}>
+                  <span className="text-xs">{summary.unrealized_gain_loss_pct >= 0 ? "↗" : "↘"}</span> 
+                  {summary.unrealized_gain_loss_pct >= 0 ? "+" : ""}{summary.unrealized_gain_loss_pct}%
                 </span>
               </h1>
             </div>
@@ -70,10 +120,10 @@ export default function DashboardPage() {
             <div className="lg:col-span-2">
               <AIInsightCard 
                 title="AI Strategic Consultant"
-                insight="Increase exposure to Global Tech Infrastructure by 4.2% while reducing stagnant retail holdings. Quantitative signals indicate a cyclical rotation into semiconductor manufacturing ahead of Q3 earnings."
-                rationale="Analysis of Macro liquidity shifts and Sentiment signals shows a 74% probability of tech outperformance in the short-term. Shadow mode testing of this strategy yielded +1.2% alpha over backtest period."
-                confidenceScore={0.74}
-                auditLink="audit-v4.2-b4c9e2"
+                insight={topSignal.reasoning}
+                rationale="Recursive swarm analysis indicates high probability of alpha generation based on current macro-liquidity trends."
+                confidenceScore={topSignal.confidence_score}
+                auditLink={`audit://${topSignal.id}`}
                 className="h-full"
               />
             </div>
@@ -92,14 +142,14 @@ export default function DashboardPage() {
             />
             <MetricCard 
               label="RISK SCORE" 
-              value="Moderate 64/100" 
-              subValue="Target: 60" 
+              value={summary.risk_profile} 
+              subValue="Target: Moderate" 
             />
              <MetricCard 
-              label="MARKET MOOD" 
-              value="Bullish Bias" 
-              subValue="Sentiment: Highly Positive" 
-              change={{ value: "Greed", isPositive: true }}
+              label="ESG ALIGNMENT" 
+              value={`${summary.esg_alignment_score}/100`} 
+              subValue="Benchmark: 70" 
+              change={{ value: "Compliant", isPositive: true }}
             />
              <MetricCard 
               label="VOLATILITY (VIX)" 
@@ -115,3 +165,5 @@ export default function DashboardPage() {
     </main>
   );
 }
+
+import { cn } from "@/lib/utils";
