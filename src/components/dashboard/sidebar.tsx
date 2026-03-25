@@ -1,7 +1,10 @@
+"use client";
+import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { LayoutDashboard, Wallet, BrainCircuit, ListVideo, ListTodo, HelpCircle, LogOut } from "lucide-react";
+import { LayoutDashboard, Wallet, BrainCircuit, ListVideo, ListTodo, HelpCircle, LogOut, UserCircle } from "lucide-react";
+
 
 const SidebarItem = ({ icon: Icon, label, href, active }: { icon: any, label: string, href: string, active: boolean }) => (
   <Link href={href}>
@@ -37,6 +40,7 @@ export const Sidebar: React.FC = () => {
         <SidebarItem icon={BrainCircuit} label="AI ADVISOR" href="/advisor" active={pathname === "/advisor"} />
         <SidebarItem icon={ListTodo} label="TASKS" href="/tasks" active={pathname === "/tasks"} />
         <SidebarItem icon={ListVideo} label="WATCHLIST" href="/watchlist" active={pathname === "/watchlist"} />
+        <SidebarItem icon={UserCircle} label="PROFILE" href="/profile" active={pathname === "/profile"} />
       </nav>
 
       <div className="p-4 space-y-4">
