@@ -1,26 +1,106 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 4px);
+
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  /* Avkast Custom Colors */
+  --color-gold: #C5A028;
+  --color-midnight: #05070A;
+  --color-slate-dark: #0F172A;
 }
 
-@media (prefers-color-scheme: dark) {
+@layer base {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #ffffff;
+    --foreground: #020817;
+
+    --primary: #C5A028;
+    --primary-foreground: #ffffff;
+
+    --secondary: #f1f5f9;
+    --secondary-foreground: #0f172a;
+
+    --accent: #10B981;
+    --accent-foreground: #ffffff;
+
+    --muted: #f1f5f9;
+    --muted-foreground: #64748b;
+
+    --border: #e2e8f0;
+    --input: #e2e8f0;
+    --ring: #C5A028;
+
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: #05070A; /* Deep Midnight */
+    --foreground: #f8fafc;
+
+    --primary: #C5A028; /* Institutional Gold */
+    --primary-foreground: #05070A;
+
+    --secondary: #0F172A; /* Slate Dark */
+    --secondary-foreground: #f8fafc;
+
+    --accent: #10B981; /* Green Success */
+    --accent-foreground: #05070A;
+
+    --muted: #1e293b;
+    --muted-foreground: #94a3b8;
+
+    --border: #1e293b;
+    --input: #1e293b;
+    --ring: #C5A028;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+/* Institutional Grade Enhancements */
+.glass {
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.gold-glow {
+  box-shadow: 0 0 20px rgba(197, 160, 40, 0.2);
+}
+
+.advisor-card {
+  background: linear-gradient(135deg, rgba(15, 23, 42, 1) 0%, rgba(5, 7, 10, 1) 100%);
+  border-left: 4px solid var(--primary);
 }
