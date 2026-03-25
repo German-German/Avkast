@@ -1,12 +1,12 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Sidebar } from "@/components/dashboard/sidebar";
 import { cn } from "@/lib/utils";
 import { TrendingUp, TrendingDown, BarChart3, RefreshCw, Eye, EyeOff } from "lucide-react";
 import { Topbar } from "@/components/dashboard/topbar";
 
-const HOLDINGS = [
+const INITIAL_HOLDINGS = [
   { ticker: "AAPL", name: "Apple Inc.", sector: "Technology", shares: 340, price: 189.45, costBasis: 142.3, weight: 12.4, change: +2.31 },
   { ticker: "MSFT", name: "Microsoft Corp.", sector: "Technology", shares: 210, price: 415.2, costBasis: 290.0, weight: 11.8, change: +0.87 },
   { ticker: "BRK.B", name: "Berkshire Hathaway", sector: "Financials", shares: 580, price: 381.6, costBasis: 312.4, weight: 10.2, change: -0.33 },
@@ -32,8 +32,25 @@ export default function PortfolioPage() {
   const [hideValues, setHideValues] = useState(false);
   const [tab, setTab] = useState<"holdings" | "allocation" | "performance">("holdings");
   const [sort, setSort] = useState<"weight" | "change" | "gain">("weight");
+  
+  const [holdings, setHoldings] = useState(INITIAL_HOLDINGS);
 
-  const sorted = [...HOLDINGS].sort((a, b) => {
+  // Live price simulation loop
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setHoldings(prev => prev.map(asset => {
+        // Random drift between -0.5% and +0.5%
+        const drift = (Math.random() - 0.5) * 0.01;
+        const newPrice = asset.price * (1 + drift);
+        const newChange = asset.change + (drift * 100);
+        return { ...asset, price: newPrice, change: newChange };
+      }));
+    }, 15000); // 15 seconds
+    
+    return () => clearInterval(interval);
+  }, []);
+
+  const sorted = [...holdings].sort((a, b) => {
     if (sort === "weight") return b.weight - a.weight;
     if (sort === "change") return b.change - a.change;
     const gainA = (a.price - a.costBasis) / a.costBasis;
@@ -41,9 +58,10 @@ export default function PortfolioPage() {
     return gainB - gainA;
   });
 
-  const totalValue = 2842109.42;
-  const dayChange = 14203;
-  const ytdReturn = 12.4;
+  const totalValue = holdings.reduce((sum, h) => sum + (h.price * h.shares), 0);
+  const prevTotalValue = INITIAL_HOLDINGS.reduce((sum, h) => sum + (h.price * h.shares), 0);
+  const dayChange = totalValue - prevTotalValue + 14203; // Keeping baseline change
+  const ytdReturn = 12.4 + ((totalValue - prevTotalValue) / prevTotalValue * 100);
 
   const mask = (val: string) => (hideValues ? "••••••" : val);
 
@@ -115,7 +133,7 @@ export default function PortfolioPage() {
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground">
-                  {HOLDINGS.length} Positions
+                  {holdings.length} Positions
                 </h2>
                 <div className="flex items-center gap-2">
                   <span className="text-[10px] text-muted-foreground uppercase font-bold">Sort:</span>

@@ -1,4 +1,4 @@
-import React from "react";
+import Link from "next/link";
 import { cn } from "@/lib/utils";
 
 const MockHeatMapData = [
@@ -32,8 +32,9 @@ export const HoldingsHeatMap: React.FC = () => {
       
       <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
         {MockHeatMapData.map((item) => (
-          <div 
+          <Link 
             key={item.symbol} 
+            href={`/asset/${item.symbol}`}
             className={cn(
               "aspect-video rounded p-2 flex flex-col justify-between transition-transform hover:scale-105 cursor-pointer",
               item.intensity
@@ -41,7 +42,7 @@ export const HoldingsHeatMap: React.FC = () => {
           >
             <span className="text-[10px] font-bold text-white tracking-widest leading-none">{item.symbol}</span>
             <span className="text-[10px] font-semibold text-white/90 leading-none">{item.change}</span>
-          </div>
+          </Link>
         ))}
       </div>
     </div>

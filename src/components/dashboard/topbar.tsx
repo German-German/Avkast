@@ -1,4 +1,5 @@
 import React from "react";
+import Link from "next/link";
 import { GlobalSearch } from "./global-search";
 import { UserProfileHeader } from "./user-profile-header";
 import { Bell, Settings } from "lucide-react";
@@ -27,9 +28,9 @@ export function Topbar({
           <button className="h-9 w-9 flex items-center justify-center rounded-xl hover:bg-white/5 text-muted-foreground transition-all">
             <Bell className="h-4 w-4" />
           </button>
-          <button className="h-9 w-9 flex items-center justify-center rounded-xl hover:bg-white/5 text-muted-foreground transition-all">
+          <Link href="/settings" className="h-9 w-9 flex items-center justify-center rounded-xl hover:bg-white/5 text-muted-foreground transition-all">
             <Settings className="h-4 w-4" />
-          </button>
+          </Link>
         </div>
 
         <div className="h-6 w-px bg-white/10" />

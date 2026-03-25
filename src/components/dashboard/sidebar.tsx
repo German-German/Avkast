@@ -28,12 +28,12 @@ export const Sidebar: React.FC = () => {
   return (
     <aside className="w-64 border-r border-border bg-background flex flex-col h-screen sticky top-0 shrink-0">
       <div className="p-8 pb-12">
-        <div className="flex flex-col">
-          <span className="font-bold text-2xl tracking-tighter text-foreground">AVKAST</span>
-          <span className="text-[10px] text-muted-foreground tracking-[0.2em] font-bold uppercase mt-1">
+        <Link href="/welcome" className="flex flex-col group cursor-pointer">
+          <span className="font-bold text-2xl tracking-tighter text-foreground group-hover:text-primary transition-colors">AVKAST</span>
+          <span className="text-[10px] text-muted-foreground tracking-[0.2em] font-bold uppercase mt-1 group-hover:text-primary/70 transition-colors">
             INTELLIGENCE
           </span>
-        </div>
+        </Link>
       </div>
 
       <nav className="flex-1 space-y-1">

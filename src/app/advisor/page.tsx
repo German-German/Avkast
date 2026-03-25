@@ -89,7 +89,7 @@ export default function AdvisorPage() {
         <div className="flex-1 overflow-y-auto p-8 space-y-6" ref={scrollRef}>
           {messages.map((msg, i) => (
             <div key={i} className={cn(
-              "flex gap-4 max-w-4xl",
+              "flex gap-4 max-w-4xl items-start",
               msg.role === "user" ? "ml-auto flex-row-reverse" : ""
             )}>
               <div className={cn(
