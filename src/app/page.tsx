@@ -68,19 +68,21 @@ export default function DashboardPage() {
              />
            </div>
            
-           <div className="flex items-center gap-4">
-             <button className="h-9 w-9 flex items-center justify-center rounded-full hover:bg-white/5 text-muted-foreground">
-               <Bell className="h-5 w-5" />
-             </button>
-             <button className="h-9 w-9 flex items-center justify-center rounded-full hover:bg-white/5 text-muted-foreground">
-               <Settings className="h-5 w-5" />
-             </button>
-             <div className="flex items-center gap-3 pl-4 border-l border-white/10">
+           <div className="flex items-center gap-6">
+             <div className="flex items-center gap-2 pr-2 border-r border-white/10">
+               <button className="h-10 w-10 flex items-center justify-center rounded-xl hover:bg-white/5 text-muted-foreground transition-all">
+                 <Bell className="h-5 w-5" />
+               </button>
+               <button className="h-10 w-10 flex items-center justify-center rounded-xl hover:bg-white/5 text-muted-foreground transition-all">
+                 <Settings className="h-5 w-5" />
+               </button>
+             </div>
+             <div className="flex items-center gap-4 pl-2">
                 <div className="text-right hidden sm:block">
                   <div className="text-xs font-bold text-foreground leading-none">Alexander Vance</div>
                   <div className="text-[10px] text-primary font-bold tracking-tighter uppercase mt-1">Premium Tier</div>
                 </div>
-                <UserCircle className="h-8 w-8 text-muted-foreground" />
+                <UserCircle className="h-9 w-9 text-muted-foreground" />
              </div>
            </div>
         </header>

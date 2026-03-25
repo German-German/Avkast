@@ -1,21 +1,25 @@
-import React from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-
-const SidebarItem = ({ icon: Icon, label, active = false }: { icon: any, label: string, active?: boolean }) => (
-  <div className={cn(
-    "flex items-center gap-3 px-4 py-3 cursor-pointer transition-all duration-200 group",
-    active ? "bg-primary/10 border-r-2 border-primary" : "hover:bg-white/5"
-  )}>
-    <Icon className={cn("h-5 w-5", active ? "text-primary" : "text-muted-foreground group-hover:text-foreground")} />
-    <span className={cn("text-sm font-medium", active ? "text-foreground" : "text-muted-foreground group-hover:text-foreground")}>
-      {label}
-    </span>
-  </div>
-);
-
 import { LayoutDashboard, Wallet, BrainCircuit, ListVideo, ListTodo, HelpCircle, LogOut } from "lucide-react";
 
+const SidebarItem = ({ icon: Icon, label, href, active }: { icon: any, label: string, href: string, active: boolean }) => (
+  <Link href={href}>
+    <div className={cn(
+      "flex items-center gap-3 px-4 py-3 cursor-pointer transition-all duration-200 group",
+      active ? "bg-primary/10 border-r-2 border-primary" : "hover:bg-white/5"
+    )}>
+      <Icon className={cn("h-5 w-5", active ? "text-primary" : "text-muted-foreground group-hover:text-foreground")} />
+      <span className={cn("text-sm font-medium", active ? "text-foreground" : "text-muted-foreground group-hover:text-foreground")}>
+        {label}
+      </span>
+    </div>
+  </Link>
+);
+
 export const Sidebar: React.FC = () => {
+  const pathname = usePathname();
+
   return (
     <aside className="w-64 border-r border-border bg-background flex flex-col h-screen sticky top-0 shrink-0">
       <div className="p-8 pb-12">
@@ -28,23 +32,23 @@ export const Sidebar: React.FC = () => {
       </div>
 
       <nav className="flex-1 space-y-1">
-        <SidebarItem icon={LayoutDashboard} label="DASHBOARD" active />
-        <SidebarItem icon={Wallet} label="PORTFOLIO" />
-        <SidebarItem icon={BrainCircuit} label="AI ADVISOR" />
-        <SidebarItem icon={ListTodo} label="TASKS" />
-        <SidebarItem icon={ListVideo} label="WATCHLIST" />
+        <SidebarItem icon={LayoutDashboard} label="DASHBOARD" href="/" active={pathname === "/"} />
+        <SidebarItem icon={Wallet} label="PORTFOLIO" href="/portfolio" active={pathname === "/portfolio"} />
+        <SidebarItem icon={BrainCircuit} label="AI ADVISOR" href="/advisor" active={pathname === "/advisor"} />
+        <SidebarItem icon={ListTodo} label="TASKS" href="/tasks" active={pathname === "/tasks"} />
+        <SidebarItem icon={ListVideo} label="WATCHLIST" href="/watchlist" active={pathname === "/watchlist"} />
       </nav>
 
       <div className="p-4 space-y-4">
-        <div className="p-4 rounded-lg bg-accent/10 border border-accent/20">
-          <button className="w-full py-2 px-4 bg-accent text-accent-foreground rounded-md text-xs font-bold uppercase tracking-tight hover:opacity-90 transition-opacity">
+        <div className="p-4 rounded-lg bg-primary/10 border border-primary/20">
+          <button className="w-full py-2.5 px-4 bg-primary text-primary-foreground rounded-md text-xs font-bold uppercase tracking-tight hover:opacity-90 transition-all shadow-sm">
             + NEW SIMULATION
           </button>
         </div>
         
         <div className="space-y-1">
-          <SidebarItem icon={HelpCircle} label="SUPPORT" />
-          <SidebarItem icon={LogOut} label="SIGN OUT" />
+          <SidebarItem icon={HelpCircle} label="SUPPORT" href="/support" active={pathname === "/support"} />
+          <SidebarItem icon={LogOut} label="SIGN OUT" href="/auth/signout" active={false} />
         </div>
       </div>
     </aside>
