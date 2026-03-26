@@ -49,7 +49,7 @@ export default function SupportPage() {
                     </div>
                     <div>
                       <div className="text-sm font-bold">priority@avkast.ai</div>
-                      <div className="text-[10px] text-muted-foreground uppercase">Response in < 2h</div>
+                      <div className="text-[10px] text-muted-foreground uppercase">Response in &lt; 2h</div>
                     </div>
                   </div>
                   <div className="flex items-center gap-4 transition-colors hover:text-primary group cursor-pointer">
