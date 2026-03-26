@@ -6,7 +6,8 @@ export async function POST() {
     const token = createSession(null, true);
 
     const response = NextResponse.json({
-      message: "Guest session started.",
+      success: true,
+      message: "Guest session started successfully.",
       user: { id: "guest", username: "Guest", email: "", isGuest: true },
     });
 

@@ -16,6 +16,8 @@ export default function PortfolioPage() {
   const [tab, setTab] = useState<"holdings" | "allocation" | "performance">("holdings");
   const [sort, setSort] = useState<"weight" | "change" | "gain">("weight");
 
+  const [isRebalancing, setIsRebalancing] = useState(false);
+
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -28,16 +30,16 @@ export default function PortfolioPage() {
     return generateUserPortfolio(startingWealth, preferredMarkets);
   }, [startingWealth, preferredMarkets, isGuest, mounted]);
 
-  // Live price simulation loop (only for logged-in users)
-  useEffect(() => {
-    if (isGuest) return;
-    const interval = setInterval(() => {
-      // This effect is now disabled as holdings are generated once.
-      // If live price simulation is desired, it needs to be integrated with generateUserPortfolio or a separate state.
-    }, 15000); // 15 seconds
-    
-    return () => clearInterval(interval);
-  }, [isGuest]);
+  // Rebalance simulation logic
+  const rebalanceData = useMemo(() => {
+    if (holdings.length === 0) return [];
+    return holdings.map(h => ({
+      ticker: h.ticker,
+      current: h.weight,
+      target: h.weight + (Math.random() * 4 - 2), // small shift
+      action: Math.random() > 0.5 ? "BUY" : "SELL"
+    })).sort((a,b) => b.target - a.target);
+  }, [holdings]);
 
   const sorted = [...holdings].sort((a, b) => {
     if (sort === "weight") return b.weight - a.weight;
@@ -87,7 +89,10 @@ export default function PortfolioPage() {
               >
                 {hideValues ? <Lock className="h-4 w-4" /> : <ArrowUpRight className="h-4 w-4" />}
               </button>
-              <button className="flex items-center gap-2 h-9 px-4 rounded-xl bg-primary/10 border border-primary/20 text-primary text-xs font-bold uppercase tracking-tight hover:bg-primary/20 transition-all">
+              <button 
+                onClick={() => setIsRebalancing(true)}
+                className="flex items-center gap-2 h-9 px-4 rounded-xl bg-primary/10 border border-primary/20 text-primary text-xs font-bold uppercase tracking-tight hover:bg-primary/20 transition-all"
+              >
                 <Activity className="h-3.5 w-3.5" /> Rebalance
               </button>
             </div>
@@ -95,6 +100,69 @@ export default function PortfolioPage() {
         />
 
         <div className="p-8 space-y-8 overflow-y-auto w-full">
+          {/* Rebalance Modal */}
+          {isRebalancing && (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 sm:p-10">
+              <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" onClick={() => setIsRebalancing(false)} />
+              <div className="relative w-full max-w-2xl glass border border-white/10 rounded-2xl shadow-2xl overflow-hidden flex flex-col animate-in fade-in zoom-in duration-300">
+                <div className="p-6 border-b border-white/5 bg-primary/5 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Activity className="h-5 w-5 text-primary" />
+                    <div>
+                      <h3 className="text-sm font-bold uppercase tracking-widest text-foreground">AI Swarm Rebalance</h3>
+                      <p className="text-[10px] text-muted-foreground uppercase font-mono mt-0.5">Optimizing for risk-adjusted returns</p>
+                    </div>
+                  </div>
+                  <button onClick={() => setIsRebalancing(false)} className="text-muted-foreground hover:text-foreground">
+                    <TrendingUp className="h-5 w-5 rotate-45" />
+                  </button>
+                </div>
+                
+                <div className="p-8 space-y-6 overflow-y-auto max-h-[60vh]">
+                  <div className="space-y-4">
+                    {rebalanceData.slice(0, 8).map((item, idx) => (
+                      <div key={item.ticker} className="flex items-center justify-between p-4 rounded-xl bg-white/[0.02] border border-white/5">
+                        <div className="flex items-center gap-4">
+                           <div className="h-10 w-10 rounded-lg bg-background border border-border flex items-center justify-center font-bold text-xs">
+                             {item.ticker}
+                           </div>
+                           <div>
+                             <div className="text-xs font-bold text-foreground">Target {item.target.toFixed(1)}%</div>
+                             <div className="text-[10px] text-muted-foreground uppercase">Current {item.current.toFixed(1)}%</div>
+                           </div>
+                        </div>
+                        <div className="text-right">
+                           <span className={cn(
+                             "px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest",
+                             item.action === "BUY" ? "bg-accent/10 text-accent border border-accent/20" : "bg-destructive/10 text-destructive border border-destructive/20"
+                           )}>
+                             {item.action}
+                           </span>
+                           <div className="text-[10px] text-muted-foreground font-mono mt-1.5 ">Δ {Math.abs(item.target - item.current).toFixed(2)}%</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="p-6 bg-white/[0.01] border-t border-white/5 flex gap-3">
+                  <button 
+                    onClick={() => setIsRebalancing(false)}
+                    className="flex-1 py-4 bg-primary text-primary-foreground font-bold uppercase tracking-widest text-xs rounded-xl hover:opacity-90 transition-all shadow-[0_0_20px_rgba(112,130,56,0.3)]"
+                  >
+                    Execute AI Realignment
+                  </button>
+                  <button 
+                    onClick={() => setIsRebalancing(false)}
+                    className="px-6 py-4 bg-white/5 border border-white/10 text-muted-foreground font-bold uppercase tracking-widest text-xs rounded-xl hover:text-foreground hover:bg-white/10 transition-all"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
           {!mounted ? (
             <div className="h-64 flex flex-col items-center justify-center gap-4 glass rounded-xl animate-pulse">
                <div className="h-8 w-8 rounded-full border-2 border-primary/20 border-t-primary animate-spin" />

@@ -1,18 +1,32 @@
 import Database from "better-sqlite3";
 import path from "path";
 import crypto from "crypto";
+import fs from "fs";
 
-const DB_PATH = path.join(process.cwd(), "data", "avkast.db");
+const DB_DIR = path.join(process.cwd(), "data");
+const DB_PATH = path.join(DB_DIR, "avkast.db");
 
 let _db: Database.Database | null = null;
 
 export function getDb(): Database.Database {
   if (_db) return _db;
-  _db = new Database(DB_PATH);
-  _db.pragma("journal_mode = WAL");
-  _db.pragma("foreign_keys = ON");
-  initTables(_db);
-  return _db;
+
+  try {
+    // Ensure data directory exists
+    if (!fs.existsSync(DB_DIR)) {
+      console.log("[DB] Creating data directory:", DB_DIR);
+      fs.mkdirSync(DB_DIR, { recursive: true });
+    }
+
+    _db = new Database(DB_PATH, { verbose: console.log });
+    _db.pragma("journal_mode = WAL");
+    _db.pragma("foreign_keys = ON");
+    initTables(_db);
+    return _db;
+  } catch (err) {
+    console.error("[DB] Failed to initialize database:", err);
+    throw new Error("Database initialization failed. Please check permissions and path.");
+  }
 }
 
 function initTables(db: Database.Database) {

@@ -19,6 +19,7 @@ export async function POST(request: Request) {
     const token = createSession(user.id);
 
     const response = NextResponse.json({
+      success: true,
       message: "Signed in successfully.",
       user: { id: user.id, username: user.username, email: user.email },
     });
