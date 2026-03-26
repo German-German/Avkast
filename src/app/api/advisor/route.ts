@@ -1,114 +1,60 @@
-import { NextRequest, NextResponse } from "next/server";
-import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from "@google/generative-ai";
-import { ADVISOR_SYSTEM_PROMPT, AI_CONFIG } from "@/lib/ai-config";
+import { NextResponse } from "next/server";
+import { GoogleGenerativeAI } from "@google/generative-ai";
+import { getSessionUser } from "@/lib/db";
+import { cookies } from "next/headers";
 
-/**
- * Avkast AI Advisor API Route
- * Handles real-time financial intelligence requests using Google Gemini.
- * Falls back to high-quality mock if GEMINI_API_KEY is missing.
- */
-
-interface AdvisorRequest {
-  message: string;
-  history?: { role: "user" | "model"; parts: { text: string }[] }[];
-  context?: {
-    portfolio?: any;
-    riskProfile?: string;
-    goals?: string[];
-    marketFocus?: string[];
-    clientBrainContext?: string; // Compact string from MemoryService
-  };
-}
-
-export async function POST(req: NextRequest) {
+export async function POST(request: Request) {
   try {
-    const body: AdvisorRequest = await req.json();
-    const { message, history, context } = body;
+    const { message, history, context } = await request.json();
 
-    const apiKey = process.env.GEMINI_API_KEY;
+    const cookieStore = await cookies();
+    const token = cookieStore.get("avkast_session")?.value;
+    const user = token ? getSessionUser(token) : null;
 
-    if (!apiKey) {
-      console.warn("AI ADVISOR: GEMINI_API_KEY not found. Operating in MOCK mode.");
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      return NextResponse.json({
-        role: "assistant",
-        content: `[MOCK MODE] I've analyzed your query regarding "${message}". Based on your ${context?.riskProfile || "Moderate"} risk profile, I recommend maintaining a 5% liquidity buffer.`,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        rationale: "Swarm logic analyzed recursive sentiment signals (Mock Logic).",
-        metadata: { model: "avkast-mock-logic-v1", engine: "Avkast Intelligence Swarm" }
-      });
+    if (!process.env.GEMINI_API_KEY) {
+      console.error("GEMINI_API_KEY is not set in environment variables.");
+      return NextResponse.json({ error: "API configuration missing." }, { status: 500 });
     }
 
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ 
-      model: AI_CONFIG.model,
-      systemInstruction: ADVISOR_SYSTEM_PROMPT
-    });
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-    // Create prompt with context injection
-    const contextPrompt = `
-USER CONTEXT:
-- Risk Profile: ${context?.riskProfile || "Moderate"}
-- Preferred Markets: ${context?.marketFocus?.join(", ") || "Global Diversified"}
-- Client Brain Summary: ${context?.clientBrainContext || "New client, no inferred traits yet."}
-- Current Portfolio Snapshot: ${JSON.stringify(context?.portfolio || "Default baseline")}
-- Active Goals: ${context?.goals?.join(", ") || "None specified"}
+    const wealth = context?.portfolio?.wealth || user?.initialWealth || 100000;
+    const markets = context?.marketFocus || user?.preferredMarkets || "Global Tech";
 
-USER MESSAGE:
-${message}
-`;
+    const systemPrompt = `
+      You are Avkast AI Advisor, an institutional-grade wealth management assistant.
+      Current User Context:
+      - Wealth: $${Number(wealth).toLocaleString()}
+      - Market Focus: ${Array.isArray(markets) ? markets.join(", ") : markets}
+      - Risk Profile: ${context?.riskProfile || "Moderate"}
+      
+      Respond with professional, data-driven financial insights. 
+      Keep it concise and aligned with institutional risk standards.
+      Always respond in plain text, do not use markdown formatting for the main body.
+    `;
 
+    // Initialize chat with history if provided
     const chat = model.startChat({
       history: history || [],
-      generationConfig: AI_CONFIG.generationConfig,
-      safetySettings: [
-        {
-          category: HarmCategory.HARM_CATEGORY_HARASSMENT,
-          threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH,
-        },
-        {
-          category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
-          threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH,
-        },
-        {
-          category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
-          threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH,
-        },
-        {
-          category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
-          threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH,
-        },
-      ],
+      generationConfig: {
+        maxOutputTokens: 500,
+      },
     });
 
-    const result = await chat.sendMessage(contextPrompt);
+    const result = await chat.sendMessage(`${systemPrompt}\n\nUser Message: ${message}`);
     const responseText = result.response.text();
 
     return NextResponse.json({
-      role: "assistant", // UI expectation
       content: responseText,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      rationale: "Swarm logic analyzed recursive macro signals and your portfolio context.",
-      metadata: {
-        model: AI_CONFIG.model,
-        engine: "Avkast Intelligence Swarm",
-        latency: "Real-time"
-      }
+      rationale: `Neural logic applied to your $${Number(wealth).toLocaleString()} capital and focus on ${Array.isArray(markets) ? markets[0] : markets}.`
     });
-
   } catch (error: any) {
-    console.error("AI ADVISOR ERROR:", error);
-    
-    // Extract specific Gemini details if available
-    const errorDetails = error.response?.candidates?.[0]?.finishReason || error.message || "Unknown neural link failure";
-    
-    return NextResponse.json(
-      { 
-        error: "Neural logic failure. Re-synchronizing...", 
-        details: errorDetails,
-        code: error.status || 500
-      },
-      { status: 500 }
-    );
+    console.error("[Advisor API Entry]", error);
+    return NextResponse.json({ 
+      error: "Neural link unstable.", 
+      details: error.message 
+    }, { status: 500 });
   }
 }
