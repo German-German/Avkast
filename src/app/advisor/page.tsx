@@ -7,14 +7,7 @@ import { cn } from "@/lib/utils";
 import { Topbar } from "@/components/dashboard/topbar";
 import { ExplainableAI } from "@/components/shared/explainable-ai";
 import { useAuth } from "@/contexts/auth-context";
-
-const RANDOM_RESPONSES = [
-  "Based on current macro-liquidity shifts, I recommend increasing exposure to tech-heavy ETFs. The risk-adjusted return profile looks optimal for the next quarter.",
-  "I've analyzed your current portfolio against the overnight volatility in Asian markets. Consider a 50bps hedging strategy using emerging market bonds.",
-  "Fundamental analysis suggests that Apple's recent R&D cycle is undervalued. A modular BUY entry at current levels is advised by the swarm.",
-  "Sentiment signals indicate 'Over-Exuberance' in the EV sector. This might be a strategic window to trim positions and lock in 15% gains.",
-  "The Nordic Real Estate market shows signs of a liquidity crunch. I've initiated a stress-test simulation relative to your Nordic holdings.",
-];
+import { MemoryService } from "@/services/memory.service";
 
 interface Message {
   role: "user" | "assistant";
@@ -29,7 +22,7 @@ export default function AdvisorPage() {
     {
       role: "assistant",
       content: `Good morning. I'm synchronized with the Avkast Swarm. I see your ${isGuest ? "Trial" : "Institutional"} account is active. How can I assist your wealth strategy today?`,
-      timestamp: "08:32 AM",
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     }
   ]);
   const [input, setInput] = useState("");
@@ -58,16 +51,44 @@ export default function AdvisorPage() {
         setMessages(prev => [...prev, handoffMsg]);
         setIsTyping(true);
 
-        setTimeout(() => {
-          const assistantReply: Message = {
-            role: "assistant",
-            content: `The mathematical simulation projects a median end-value of $${Math.floor(data.projectedReturn).toLocaleString()} over ${data.years} years. Given the combined volatility of ${(data.volatility * 100).toFixed(2)}%, the portfolio exhibits a robust risk-adjusted profile. I recommend adding counter-cyclical assets to hedge against the 5th percentile tail risk.`,
-            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-            rationale: "Swarm logic analyzed the sandbox parameters and identified volatility drag."
-          };
-          setMessages(prev => [...prev, assistantReply]);
-          setIsTyping(false);
-        }, 2000);
+        // Analyze handoff with real AI
+        (async () => {
+          try {
+            const brainContext = MemoryService.getAgentContext();
+            const response = await fetch("/api/advisor", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                message: handoffMsg.content,
+                context: {
+                  portfolio: { wealth: data.initialInvestment },
+                  riskProfile: "Moderate",
+                  clientBrainContext: brainContext
+                }
+              })
+            });
+
+            if (!response.ok) throw new Error();
+            const resData = await response.json();
+            
+            setMessages(prev => [...prev, {
+              role: "assistant",
+              content: resData.content,
+              timestamp: resData.timestamp,
+              rationale: resData.rationale
+            }]);
+          } catch (e) {
+            // Fallback for handoff if AI fails
+            setMessages(prev => [...prev, {
+              role: "assistant",
+              content: `The mathematical simulation projects a median end-value of $${Math.floor(data.projectedReturn).toLocaleString()} over ${data.years} years. Given the combined volatility of ${(data.volatility * 100).toFixed(2)}%, the portfolio exhibits a robust risk-adjusted profile.`,
+              timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+              rationale: "Swarm logic fallback analyzed the sandbox parameters."
+            }]);
+          } finally {
+            setIsTyping(false);
+          }
+        })();
         
       } catch (e) {
         console.error("Failed to parse AI handoff context", e);
@@ -75,8 +96,8 @@ export default function AdvisorPage() {
     }
   }, []);
 
-  const handleSend = () => {
-    if (!input.trim()) return;
+  const handleSend = async () => {
+    if (!input.trim() || isTyping) return;
 
     const userMessage: Message = {
       role: "user",
@@ -85,33 +106,57 @@ export default function AdvisorPage() {
     };
 
     setMessages(prev => [...prev, userMessage]);
+    const currentInput = input;
     setInput("");
     setIsTyping(true);
 
-    // Contextual Response Logic
-    setTimeout(() => {
+    try {
       const wealth = user?.initialWealth || 100000;
       const markets = user?.preferredMarkets ? (typeof user.preferredMarkets === 'string' ? JSON.parse(user.preferredMarkets) : user.preferredMarkets) : [];
-      const primaryMarket = markets[0] || "Global Tech";
+      const brainContext = MemoryService.getAgentContext();
 
-      const dynamicResponses = [
-        `Given your focus on ${primaryMarket}, the swarm suggests a slight overweight position in defensive assets while maintaining your $${wealth.toLocaleString()} liquidity baseline.`,
-        `Analyzing the $${wealth.toLocaleString()} simulation matrix... The probability of alpha in ${primaryMarket} is currently 0.74 based on recursive sentiment analysis.`,
-        `I recommend hedging your current holdings. Your declared interest in ${markets.join("/")} shows a volatility drift of 4.2% relative to the benchmark.`,
-        `The Avkast Swarm has identified a buy signal in a secondary market related to ${primaryMarket}. Shall we run a stress test for your portfolio?`,
-      ];
+      const history = messages.slice(1).map(msg => ({
+        role: msg.role === "assistant" ? "model" as const : "user" as const,
+        parts: [{ text: msg.content }]
+      }));
 
-      const content = dynamicResponses[Math.floor(Math.random() * dynamicResponses.length)];
+      const response = await fetch("/api/advisor", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: currentInput,
+          history,
+          context: {
+            portfolio: { wealth },
+            riskProfile: "Moderate",
+            marketFocus: markets,
+            clientBrainContext: brainContext
+          }
+        })
+      });
+
+      if (!response.ok) throw new Error("Neural link unstable.");
+
+      const data = await response.json();
       
       const assistantMessage: Message = {
         role: "assistant",
-        content,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        rationale: `Swarm analysis cross-referenced with your $${wealth.toLocaleString()} capital and ${primaryMarket} sector focus.`
+        content: data.content,
+        timestamp: data.timestamp,
+        rationale: data.rationale
       };
+
       setMessages(prev => [...prev, assistantMessage]);
+    } catch (error) {
+      const errorMessage: Message = {
+        role: "assistant",
+        content: "I apologize, but my connection to the Avkast Swarm was momentarily interrupted. Please try again or check your network status.",
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      };
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
       setIsTyping(false);
-    }, 1500);
+    }
   };
 
   return (
@@ -204,16 +249,22 @@ export default function AdvisorPage() {
               <Send className="h-4 w-4" />
             </button>
           </div>
-          <div className="flex justify-center gap-4 mt-4">
-             {["WHAT IF INFLATION HITS 4%?", "EXPLAIN YIELD CURVE INVERSION", "OPTIMIZE FOR TAX EFFICIENCY"].map(hint => (
-               <button 
-                key={hint} 
-                onClick={() => setInput(hint)}
-                className="text-[10px] font-bold text-muted-foreground hover:text-primary transition-colors uppercase tracking-widest px-3 py-1 border border-white/5 rounded-full hover:border-primary/20"
-               >
-                 {hint}
-               </button>
-             ))}
+          <div className="flex flex-col items-center gap-2 mt-4">
+             <div className="flex gap-4">
+              {["WHAT IF INFLATION HITS 4%?", "EXPLAIN YIELD CURVE INVERSION", "OPTIMIZE FOR TAX EFFICIENCY"].map(hint => (
+                <button 
+                  key={hint} 
+                  onClick={() => setInput(hint)}
+                  className="text-[10px] font-bold text-muted-foreground hover:text-primary transition-colors uppercase tracking-widest px-3 py-1 border border-white/5 rounded-full hover:border-primary/20"
+                >
+                  {hint}
+                </button>
+              ))}
+             </div>
+             <p className="text-[10px] text-muted-foreground/60 flex items-center gap-1 uppercase tracking-wider font-medium">
+                <Info className="h-3 w-3" />
+                Avkast Swarm insights are generative and do not constitute guaranteed financial advice.
+             </p>
           </div>
         </div>
       </div>
