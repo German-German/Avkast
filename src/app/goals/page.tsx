@@ -3,8 +3,10 @@
 import React from "react";
 import { Sidebar } from "@/components/dashboard/sidebar";
 import { Topbar } from "@/components/dashboard/topbar";
-import { Target, Plus, Home, Rocket, Wallet, TrendingUp, ChevronRight } from "lucide-react";
+import { Target, Plus, Home, Rocket, Wallet, TrendingUp, ChevronRight, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/contexts/auth-context";
 
 const GOALS = [
   { id: 1, title: "Early Retirement", target: 2500000, current: 1240000, icon: Rocket, color: "text-primary", bg: "bg-primary/10" },
@@ -13,6 +15,27 @@ const GOALS = [
 ];
 
 export default function GoalsPage() {
+  const router = useRouter();
+  const { user } = useAuth();
+  const [goals, setGoals] = React.useState(GOALS);
+  const [showAddModal, setShowAddModal] = React.useState(false);
+  const [newGoal, setNewGoal] = React.useState({ title: "", target: 0 });
+
+  const handleAddGoal = () => {
+    if (!newGoal.title || newGoal.target <= 0) return;
+    const goal = {
+      id: goals.length + 1,
+      title: newGoal.title,
+      target: newGoal.target,
+      current: 0,
+      icon: Rocket,
+      color: "text-primary",
+      bg: "bg-primary/10"
+    };
+    setGoals([...goals, goal]);
+    setShowAddModal(false);
+    setNewGoal({ title: "", target: 0 });
+  };
   return (
     <main className="flex min-h-screen bg-background w-full">
       <Sidebar />
@@ -25,7 +48,9 @@ export default function GoalsPage() {
             </div>
           }
           rightContent={
-            <button className="flex items-center gap-2 h-9 px-4 rounded-xl bg-primary text-primary-foreground text-xs font-bold uppercase tracking-tight hover:opacity-90 transition-all">
+            <button 
+              onClick={() => setShowAddModal(true)}
+              className="flex items-center gap-2 h-9 px-4 rounded-xl bg-primary text-primary-foreground text-xs font-bold uppercase tracking-tight hover:opacity-90 transition-all">
               <Plus className="h-3.5 w-3.5" /> Define New Goal
             </button>
           }
@@ -33,7 +58,7 @@ export default function GoalsPage() {
 
         <div className="p-8 space-y-8 overflow-y-auto">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {GOALS.map((goal) => {
+            {goals.map((goal) => {
               const progress = (goal.current / goal.target) * 100;
               return (
                 <div key={goal.id} className="p-6 rounded-2xl glass border border-white/5 space-y-6 hover:border-white/10 transition-all group">
@@ -75,7 +100,9 @@ export default function GoalsPage() {
                 <h2 className="text-xl font-bold text-foreground">AI Goal Projection</h2>
                 <p className="text-sm text-muted-foreground">Recursive analysis of current savings rate vs. target benchmarks.</p>
               </div>
-              <button className="p-2 border border-white/10 rounded-lg hover:bg-white/5 transition-all text-muted-foreground">
+              <button 
+                onClick={() => router.push("/advisor")}
+                className="p-2 border border-white/10 rounded-lg hover:bg-white/5 transition-all text-muted-foreground">
                 <ChevronRight className="h-5 w-5" />
               </button>
             </div>
@@ -98,6 +125,49 @@ export default function GoalsPage() {
           </div>
         </div>
       </div>
+
+      {showAddModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-background border border-border w-full max-w-md rounded-3xl p-8 shadow-2xl space-y-6">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xl font-bold text-foreground">Define New Goal</h3>
+              <button onClick={() => setShowAddModal(false)} className="p-2 hover:bg-white/5 rounded-lg text-muted-foreground">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Goal Title</label>
+                <input 
+                  type="text" 
+                  value={newGoal.title}
+                  onChange={e => setNewGoal({...newGoal, title: e.target.value})}
+                  placeholder="e.g. Dream Home, Retirement" 
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-primary/50 transition-all"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Target Amount ($)</label>
+                <input 
+                  type="number" 
+                  value={newGoal.target}
+                  onChange={e => setNewGoal({...newGoal, target: Number(e.target.value)})}
+                  placeholder="500000" 
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-primary/50 transition-all"
+                />
+              </div>
+            </div>
+
+            <button 
+              onClick={handleAddGoal}
+              className="w-full py-4 bg-primary text-primary-foreground rounded-xl text-xs font-bold uppercase tracking-widest hover:opacity-90 transition-all shadow-lg"
+            >
+              Initialize Goal Matrix
+            </button>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

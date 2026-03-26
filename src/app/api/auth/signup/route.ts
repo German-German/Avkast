@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import crypto from 'crypto';
 import { getDb, hashPassword, createSession } from "@/lib/db";
 
 export async function POST(request: Request) {

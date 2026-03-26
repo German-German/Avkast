@@ -22,6 +22,9 @@ export default function AdvisorPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
+  const [marketDrawdown, setMarketDrawdown] = useState(0);
+  const [savingsBoost, setSavingsBoost] = useState(0);
+  const [inflationRate, setInflationRate] = useState(2.1);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -138,7 +141,12 @@ export default function AdvisorPage() {
             portfolio: { wealth },
             riskProfile: "Moderate",
             marketFocus: markets,
-            clientBrainContext: brainContext
+            clientBrainContext: brainContext,
+            scenarios: {
+              marketDrawdown,
+              savingsBoost,
+              inflationRate
+            }
           }
         })
       });
@@ -174,6 +182,69 @@ export default function AdvisorPage() {
     <main className="flex min-h-screen bg-background w-full">
       <Sidebar />
       
+      {/* What-If Control Panel (Merged) */}
+      <div className="w-80 border-r border-border bg-background/30 flex flex-col pt-20 px-6 space-y-8 shrink-0 overflow-y-auto">
+        <div className="space-y-1">
+          <h2 className="text-[10px] font-bold uppercase tracking-[0.2em] text-accent flex items-center gap-2">
+            <Sparkles className="h-3 w-3" /> Strategy Engine
+          </h2>
+          <p className="text-xs text-muted-foreground leading-relaxed">Adjust parameters to simulate future market dynamics.</p>
+        </div>
+
+        <div className="space-y-8 pt-4">
+          {/* Market Drawdown */}
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <label className="text-[10px] font-bold uppercase tracking-widest text-foreground">Market Dip</label>
+              <span className="text-xs font-mono text-destructive">-{marketDrawdown}%</span>
+            </div>
+            <input 
+              type="range" min="0" max="50" step="5"
+              value={marketDrawdown}
+              onChange={(e) => setMarketDrawdown(Number(e.target.value))}
+              className="w-full accent-destructive h-1 bg-white/5 rounded-full appearance-none"
+            />
+          </div>
+
+          {/* Savings Boost */}
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <label className="text-[10px] font-bold uppercase tracking-widest text-foreground">Savings Boost</label>
+              <span className="text-xs font-mono text-accent">+{savingsBoost}%</span>
+            </div>
+            <input 
+              type="range" min="0" max="100" step="10"
+              value={savingsBoost}
+              onChange={(e) => setSavingsBoost(Number(e.target.value))}
+              className="w-full accent-accent h-1 bg-white/5 rounded-full appearance-none"
+            />
+          </div>
+
+          {/* Inflation Rate */}
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <label className="text-[10px] font-bold uppercase tracking-widest text-foreground">Inflation</label>
+              <span className="text-xs font-mono text-primary">{inflationRate}%</span>
+            </div>
+            <input 
+              type="range" min="0" max="15" step="0.5"
+              value={inflationRate}
+              onChange={(e) => setInflationRate(Number(e.target.value))}
+              className="w-full accent-primary h-1 bg-white/5 rounded-full appearance-none"
+            />
+          </div>
+        </div>
+
+        <button 
+          onClick={() => {
+            setInput(`Analyze my core strategy if markets drop ${marketDrawdown}%, while I boost savings by ${savingsBoost}% and inflation sits at ${inflationRate}%?`);
+          }}
+          className="w-full py-3 bg-white/5 border border-white/10 text-[10px] font-bold uppercase tracking-widest rounded-xl hover:bg-white/10 transition-all"
+        >
+          Run Neural Analysis
+        </button>
+      </div>
+
       <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
         <Topbar
           leftContent={
