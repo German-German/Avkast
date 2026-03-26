@@ -122,9 +122,14 @@ export default function SettingsPage() {
             <Brain className="h-6 w-6 text-primary shrink-0" />
             <div>
               <div className="text-sm font-bold text-foreground">Client Brain Active</div>
-              <div className="text-xs text-muted-foreground">
-                {memory.decisionHistory.length} decisions tracked · Last updated {formatDate(memory.lastUpdatedAt)} ·
-                {" "}{Object.values(memory.behaviouralProfile).filter(v => (v as any).source === "inferred").length} inferred traits
+              <div className="text-xs text-muted-foreground flex items-center gap-1.5 flex-wrap">
+                <span className="font-bold text-foreground/80">{mounted ? memory.decisionHistory.length : "0"}</span> decisions tracked
+                <span className="opacity-40">·</span>
+                Last updated <span className="font-bold text-foreground/80">{formatDate(memory.lastUpdatedAt)}</span>
+                <span className="opacity-40">·</span>
+                <span className="font-bold text-foreground/80">
+                  {mounted ? Object.values(memory.behaviouralProfile).filter((v: any) => v.source === "inferred").length : "0"}
+                </span> inferred traits
               </div>
             </div>
             <div className="ml-auto text-[10px] font-mono text-muted-foreground">v{memory.version}</div>

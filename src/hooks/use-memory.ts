@@ -1,10 +1,11 @@
 "use client";
 import { useState, useCallback, useEffect } from "react";
 import { MemoryService } from "@/services/memory.service";
+import { createDefaultMemory } from "@/lib/memory";
 import type { ClientMemory, ExplicitPreferences, HardConstraints, DecisionRecord, DecisionOutcome } from "@/lib/memory";
 
 export function useMemory() {
-  const [memory, setMemory] = useState<ClientMemory>(() => MemoryService.get());
+  const [memory, setMemory] = useState<ClientMemory>(createDefaultMemory());
 
   const refresh = useCallback(() => setMemory(MemoryService.get()), []);
 
