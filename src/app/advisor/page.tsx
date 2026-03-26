@@ -115,6 +115,8 @@ export default function AdvisorPage() {
       const markets = user?.preferredMarkets ? (typeof user.preferredMarkets === 'string' ? JSON.parse(user.preferredMarkets) : user.preferredMarkets) : [];
       const brainContext = MemoryService.getAgentContext();
 
+      // Convert history for Gemini format (strictly alternating)
+      // messages[0] is always the assistant greeting, so we slice from 1
       const history = messages.slice(1).map(msg => ({
         role: msg.role === "assistant" ? "model" as const : "user" as const,
         parts: [{ text: msg.content }]
@@ -135,9 +137,11 @@ export default function AdvisorPage() {
         })
       });
 
-      if (!response.ok) throw new Error("Neural link unstable.");
-
       const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.details || data.error || "Neural link unstable.");
+      }
       
       const assistantMessage: Message = {
         role: "assistant",
@@ -147,10 +151,11 @@ export default function AdvisorPage() {
       };
 
       setMessages(prev => [...prev, assistantMessage]);
-    } catch (error) {
+    } catch (error: any) {
+      console.error("Advisor Fetch Error:", error);
       const errorMessage: Message = {
         role: "assistant",
-        content: "I apologize, but my connection to the Avkast Swarm was momentarily interrupted. Please try again or check your network status.",
+        content: `I apologize, but my connection to the Avkast Swarm was interrupted. Details: ${error.message}`,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       };
       setMessages(prev => [...prev, errorMessage]);

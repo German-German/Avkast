@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from "@google/generative-ai";
 import { ADVISOR_SYSTEM_PROMPT, AI_CONFIG } from "@/lib/ai-config";
 
 /**
@@ -61,27 +61,53 @@ ${message}
     const chat = model.startChat({
       history: history || [],
       generationConfig: AI_CONFIG.generationConfig,
+      safetySettings: [
+        {
+          category: HarmCategory.HARM_CATEGORY_HARASSMENT,
+          threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH,
+        },
+        {
+          category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+          threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH,
+        },
+        {
+          category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+          threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH,
+        },
+        {
+          category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+          threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH,
+        },
+      ],
     });
 
     const result = await chat.sendMessage(contextPrompt);
     const responseText = result.response.text();
 
     return NextResponse.json({
-      role: "assistant", // Next.js UI uses "assistant", Gemini uses "model"
+      role: "assistant", // UI expectation
       content: responseText,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      rationale: "Swarm logic cross-referenced your portfolio parameters with real-time macro indicators.",
+      rationale: "Swarm logic analyzed recursive macro signals and your portfolio context.",
       metadata: {
         model: AI_CONFIG.model,
-        engine: "Avkast Intelligence Swarm (Gemini)",
+        engine: "Avkast Intelligence Swarm",
         latency: "Real-time"
       }
     });
 
   } catch (error: any) {
-    console.error("AI Advisor Route Error:", error);
+    console.error("AI ADVISOR ERROR:", error);
+    
+    // Extract specific Gemini details if available
+    const errorDetails = error.response?.candidates?.[0]?.finishReason || error.message || "Unknown neural link failure";
+    
     return NextResponse.json(
-      { error: "Neural logic failure. Re-synchronizing...", details: error.message },
+      { 
+        error: "Neural logic failure. Re-synchronizing...", 
+        details: errorDetails,
+        code: error.status || 500
+      },
       { status: 500 }
     );
   }
