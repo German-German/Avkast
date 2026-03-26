@@ -47,6 +47,8 @@ const SECTOR_ASSETS: Record<string, any[]> = {
     { ticker: "GLD", name: "SPDR Gold Shares", price: 185.6 },
     { ticker: "SLV", name: "iShares Silver", price: 22.4 },
     { ticker: "USO", name: "US Oil Fund", price: 74.2 },
+    { ticker: "UNG", name: "United States NatGas", price: 15.8 },
+    { ticker: "CPER", name: "United States Copper", price: 24.5 },
   ],
   "Consumer": [
     { ticker: "AMZN", name: "Amazon.com", price: 178.4 },

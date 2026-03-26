@@ -29,6 +29,10 @@ const MARKET_DATA: Record<string, { price: number; change: number; name: string;
   WMT: { price: 168.7, change: 1.1, name: "Walmart Inc.", sector: "Consumer" },
   BRK: { price: 381.6, change: -0.33, name: "Berkshire Hathaway", sector: "Financials" },
   GLD: { price: 185.6, change: 1.04, name: "SPDR Gold Shares", sector: "Commodities" },
+  SLV: { price: 23.45, change: 0.82, name: "iShares Silver Trust", sector: "Commodities" },
+  USO: { price: 76.12, change: -1.45, name: "United States Oil Fund", sector: "Commodities" },
+  UNG: { price: 16.34, change: 2.11, name: "US Natural Gas Fund", sector: "Commodities" },
+  CPER: { price: 25.67, change: 0.54, name: "US Copper Index Fund", sector: "Commodities" },
   ASML: { price: 892.3, change: 5.1, name: "ASML Holding", sector: "Technology" },
   NEE: { price: 62.4, change: -0.71, name: "NextEra Energy", sector: "Utilities" },
 };

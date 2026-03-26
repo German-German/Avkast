@@ -39,8 +39,8 @@ export default function WelcomePage() {
       {/* Top Banner */}
       <header className="relative z-10 w-full p-8 flex justify-between items-center">
         <div className="flex flex-col">
-          <span className="font-bold text-xl tracking-tighter text-foreground">AVKAST</span>
-          <span className="text-[9px] text-muted-foreground tracking-[0.3em] font-bold uppercase mt-0.5">
+          <span className="font-bold text-2xl tracking-tighter text-foreground">AVKAST</span>
+          <span className="text-[10px] text-muted-foreground tracking-[0.4em] font-bold uppercase mt-1">
             Institutional
           </span>
         </div>
@@ -66,7 +66,7 @@ export default function WelcomePage() {
             {isGuest ? "Welcome, Guest." : `Welcome back, ${user?.username}.`}
           </h1>
           
-          <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed mb-12">
+          <p className="text-base md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed mb-16">
             The mathematical engine is synchronized. Your portfolio is currently being analyzed across 12,000 synthetic market conditions to project optimal rebalancing pathways.
           </p>
 
@@ -82,7 +82,7 @@ export default function WelcomePage() {
 
         {/* Feature Cards Grid */}
         <div className={cn(
-          "grid grid-cols-1 md:grid-cols-3 gap-6 mt-24 max-w-5xl w-full transition-all duration-1000 delay-300 transform",
+          "grid grid-cols-1 md:grid-cols-3 gap-8 mt-32 max-w-6xl w-full transition-all duration-1000 delay-300 transform",
           mounted ? "translate-y-0 opacity-100" : "translate-y-12 opacity-0"
         )}>
           {features.map((f, i) => (

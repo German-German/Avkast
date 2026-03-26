@@ -4,7 +4,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/contexts/auth-context";
 import { cn } from "@/lib/utils";
-import { LayoutDashboard, Wallet, BrainCircuit, ListVideo, ListTodo, HelpCircle, LogOut, UserCircle } from "lucide-react";
+import { LayoutDashboard, Wallet, BrainCircuit, ListVideo, ListTodo, HelpCircle, LogOut, UserCircle, Target, Sparkles } from "lucide-react";
+import { WealthDistribution } from "./wealth-distribution";
 
 
 const SidebarItem = ({ icon: Icon, label, href, active }: { icon: any, label: string, href: string, active: boolean }) => (
@@ -42,6 +43,8 @@ export const Sidebar: React.FC = () => {
         <SidebarItem icon={BrainCircuit} label="AI ADVISOR" href="/advisor" active={pathname === "/advisor"} />
         <SidebarItem icon={ListTodo} label="TASKS" href="/tasks" active={pathname === "/tasks"} />
         <SidebarItem icon={ListVideo} label="WATCHLIST" href="/watchlist" active={pathname === "/watchlist"} />
+        <SidebarItem icon={Target} label="GOALS" href="/goals" active={pathname === "/goals"} />
+        <SidebarItem icon={Sparkles} label="WHAT-IF" href="/what-if" active={pathname === "/what-if"} />
       </nav>
 
       <div className="p-4 space-y-4">
@@ -54,6 +57,7 @@ export const Sidebar: React.FC = () => {
         </div>
         
         <div className="space-y-1">
+          <WealthDistribution className="mx-4 mb-4" />
           <SidebarItem icon={HelpCircle} label="SUPPORT" href="/support" active={pathname === "/support"} />
           <div onClick={signOut} className="flex items-center gap-3 px-4 py-3 cursor-pointer transition-all duration-200 group hover:bg-destructive/10">
             <LogOut className="h-5 w-5 text-muted-foreground group-hover:text-destructive" />

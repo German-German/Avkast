@@ -139,8 +139,8 @@ export default function SandboxPage() {
           rightContent={null}
         />
 
-        <div className="flex-1 overflow-y-auto p-8">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 h-full">
+        <div className="flex-1 overflow-y-auto p-10">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 h-full max-w-[1600px] mx-auto">
             
             {/* Left Column: Asset Pool */}
             <div className="col-span-1 space-y-6">
@@ -177,15 +177,15 @@ export default function SandboxPage() {
             </div>
 
             {/* Right Column: Sandbox & Chart */}
-            <div className="col-span-2 space-y-8 flex flex-col">
+            <div className="col-span-2 space-y-10 flex flex-col">
               
               {/* Construction Box */}
               <div 
                 onDrop={handleDrop}
                 onDragOver={handleDragOver}
                 className={cn(
-                  "p-8 rounded-2xl border-2 border-dashed transition-all flex flex-col",
-                  portfolio.length === 0 ? "border-white/10 items-center justify-center min-h-[200px]" : "border-primary/30 bg-primary/5 min-h-[150px]"
+                  "p-10 rounded-2xl border-2 border-dashed transition-all flex flex-col",
+                  portfolio.length === 0 ? "border-white/10 items-center justify-center min-h-[250px]" : "border-primary/30 bg-primary/5 min-h-[180px]"
                 )}
               >
                 {portfolio.length === 0 ? (
@@ -243,7 +243,7 @@ export default function SandboxPage() {
                   )}
                 </div>
 
-                <div className="flex-1 p-8 relative flex items-center justify-center min-h-[400px]">
+                <div className="flex-1 p-10 relative flex items-center justify-center min-h-[450px]">
                   {!simulation ? (
                     <div className="text-center opacity-30 flex flex-col items-center gap-3">
                       <Activity className="h-10 w-10" />
