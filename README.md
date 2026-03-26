@@ -73,8 +73,4 @@ This stack provides the front-end foundation for a scalable, modern web applicat
 
 - As an investor, I want to be notified when my portfolio becomes unbalanced, so that I can rebalance my holdings and stay aligned with my intended allocation.
 
-- As an investor, I want to explore financial scenarios such as market downturns or major life events, so that I can better understand how different situations may affect my portfolio and long-term plans.
-
-```bash
-npm install
-npm run dev
+- As an investor, I want to explore financial scenarios such as market downturns or major life events, so that I can better understand how different situations may af
