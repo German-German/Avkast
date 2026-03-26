@@ -18,16 +18,22 @@ interface Message {
 
 export default function AdvisorPage() {
   const { user, isGuest } = useAuth();
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      role: "assistant",
-      content: `Good morning. I'm synchronized with the Avkast Swarm. I see your ${isGuest ? "Trial" : "Institutional"} account is active. How can I assist your wealth strategy today?`,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-    }
-  ]);
+  const [mounted, setMounted] = useState(false);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setMounted(true);
+    setMessages([
+      {
+        role: "assistant",
+        content: `Good morning. I'm synchronized with the Avkast Swarm. I see your ${isGuest ? "Trial" : "Institutional"} account is active. How can I assist your wealth strategy today?`,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      }
+    ]);
+  }, [isGuest]);
 
   useEffect(() => {
     if (scrollRef.current) {

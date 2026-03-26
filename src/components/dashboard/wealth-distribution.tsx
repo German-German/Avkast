@@ -8,6 +8,11 @@ import { generateUserPortfolio } from "@/lib/portfolio-engine";
 
 export const WealthDistribution: React.FC<{ className?: string }> = ({ className }) => {
   const { user, isGuest } = useAuth();
+  const [mounted, setMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const startingWealth = user?.initialWealth || 100000;
   const preferredMarkets = user?.preferredMarkets 
@@ -15,12 +20,18 @@ export const WealthDistribution: React.FC<{ className?: string }> = ({ className
     : [];
 
   const portfolio = React.useMemo(() => {
-    if (isGuest) return [];
+    if (isGuest || !mounted) return [];
     return generateUserPortfolio(startingWealth, preferredMarkets);
-  }, [startingWealth, preferredMarkets, isGuest]);
+  }, [startingWealth, preferredMarkets, isGuest, mounted]);
 
-  const totalValue = portfolio.reduce((sum, h) => sum + (h.price * h.shares), 0) || startingWealth;
-  const dayChangePct = portfolio.reduce((sum, h) => sum + (h.change * (h.weight / 100)), 0) || 1.2;
+  const totalValue = portfolio.length > 0 
+    ? portfolio.reduce((sum, h) => sum + (h.price * h.shares), 0)
+    : startingWealth;
+    
+  const dayChangePct = portfolio.length > 0
+    ? portfolio.reduce((sum, h) => sum + (h.change * (h.weight / 100)), 0)
+    : 1.2;
+    
   const dayChangeUsd = totalValue * (dayChangePct / 100);
 
   // Derive mini-allocation
@@ -30,6 +41,21 @@ export const WealthDistribution: React.FC<{ className?: string }> = ({ className
     pct: portfolio.filter(h => h.sector === s).reduce((sum, h) => sum + h.weight, 0),
     color: [`#708238`, `#A4C639`, `#556B2F`, `#8FBC8F`, `#2E8B57`][i % 5]
   })).sort((a, b) => b.pct - a.pct);
+
+  // If not mounted, show a stable skeleton to match SSR
+  if (!mounted) {
+    return (
+      <div className={cn("p-4 rounded-xl glass border border-white/5 space-y-4 shadow-xl bg-white/[0.02] min-h-[140px]", className)}>
+        <div className="space-y-1">
+          <span className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground opacity-50">Global Wealth</span>
+          <div className="flex items-baseline justify-between">
+            <h4 className="text-lg font-bold tracking-tighter text-foreground opacity-50">$---,---</h4>
+          </div>
+        </div>
+        <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden" />
+      </div>
+    );
+  }
 
   return (
     <div className={cn("p-4 rounded-xl glass border border-white/5 space-y-4 shadow-xl bg-white/[0.02]", className)}>

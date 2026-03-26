@@ -16,9 +16,11 @@ import { generateUserPortfolio } from "@/lib/portfolio-engine";
 export default function DashboardPage() {
   const { user, isGuest } = useAuth();
   const [data, setData] = useState<any>(null);
+  const [mounted, setMounted] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    setMounted(true);
     fetch("/api/tasks")
       .then((r) => r.ok ? r.json() : null)
       .then((result) => { setData(result); })
@@ -30,15 +32,15 @@ export default function DashboardPage() {
   const preferredMarkets = user?.preferredMarkets ? (typeof user.preferredMarkets === 'string' ? JSON.parse(user.preferredMarkets) : user.preferredMarkets) : [];
 
   const portfolio = useMemo(() => {
-    if (isGuest) return [];
+    if (isGuest || !mounted) return [];
     return generateUserPortfolio(startingWealth, preferredMarkets);
-  }, [startingWealth, preferredMarkets, isGuest]);
+  }, [startingWealth, preferredMarkets, isGuest, mounted]);
 
   const totalValue = portfolio.reduce((sum, h) => sum + (h.price * h.shares), 0);
   const dayChangePct = portfolio.reduce((sum, h) => sum + (h.change * (h.weight / 100)), 0);
   const dayChangeUsd = totalValue * (dayChangePct / 100);
 
-  if (loading) {
+  if (loading || !mounted) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
         <Loader2 className="h-12 w-12 text-primary animate-spin" />

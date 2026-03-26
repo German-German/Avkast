@@ -11,17 +11,22 @@ import Link from "next/link";
 
 export default function PortfolioPage() {
   const { user, isGuest } = useAuth();
+  const [mounted, setMounted] = useState(false);
   const [hideValues, setHideValues] = useState(false);
   const [tab, setTab] = useState<"holdings" | "allocation" | "performance">("holdings");
   const [sort, setSort] = useState<"weight" | "change" | "gain">("weight");
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
   
   const startingWealth = user?.initialWealth || 100000;
   const preferredMarkets = user?.preferredMarkets ? (typeof user.preferredMarkets === 'string' ? JSON.parse(user.preferredMarkets) : user.preferredMarkets) : [];
 
   const holdings = useMemo(() => {
-    if (isGuest) return [];
+    if (isGuest || !mounted) return [];
     return generateUserPortfolio(startingWealth, preferredMarkets);
-  }, [startingWealth, preferredMarkets, isGuest]);
+  }, [startingWealth, preferredMarkets, isGuest, mounted]);
 
   // Live price simulation loop (only for logged-in users)
   useEffect(() => {
@@ -90,7 +95,12 @@ export default function PortfolioPage() {
         />
 
         <div className="p-8 space-y-8 overflow-y-auto w-full">
-          {isGuest ? (
+          {!mounted ? (
+            <div className="h-64 flex flex-col items-center justify-center gap-4 glass rounded-xl animate-pulse">
+               <div className="h-8 w-8 rounded-full border-2 border-primary/20 border-t-primary animate-spin" />
+               <p className="text-sm text-muted-foreground font-medium uppercase tracking-widest">Neural Link Synchronizing...</p>
+            </div>
+          ) : isGuest ? (
             <div className="p-8 mt-20 rounded-3xl glass border border-white/5 text-center space-y-4 max-w-lg mx-auto shadow-2xl">
                <div className="mx-auto h-20 w-20 rounded-2xl bg-destructive/10 border border-destructive/20 flex items-center justify-center mb-6">
                  <Lock className="h-10 w-10 text-destructive" />

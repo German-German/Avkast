@@ -39,11 +39,16 @@ const MARKET_DATA: Record<string, { price: number; change: number; name: string;
 
 export default function WatchlistPage() {
   const { isGuest } = useAuth();
+  const [mounted, setMounted] = useState(false);
   const [items, setItems] = useState<WatchlistItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [showSearch, setShowSearch] = useState(false);
   const [adding, setAdding] = useState<string | null>(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const fetchWatchlist = useCallback(async () => {
     try {
@@ -128,7 +133,7 @@ export default function WatchlistPage() {
 
         <div className="p-8 space-y-6 overflow-y-auto">
           {/* Guest banner */}
-          {isGuest && (
+          {(mounted && isGuest) && (
             <div className="p-4 rounded-xl bg-amber-500/5 border border-amber-500/20 text-xs text-amber-300/80">
               <strong>Guest mode:</strong> Watchlist is read-only. Sign up to save your watchlist across sessions.
             </div>
