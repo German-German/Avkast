@@ -283,7 +283,7 @@ export default function SandboxPage() {
                       </svg>
                       
                       {/* Tooltips/Labels on right side */}
-                      <div className="absolute right-0 top-0 bottom-0 flex flex-col justify-between translate-x-full pl-6 py-4 w-40 border-l border-white/10 pointer-events-none">
+                      <div className="absolute right-0 top-0 bottom-0 flex flex-col justify-between translate-x-[calc(100%+1.5rem)] py-4 w-40 border-l border-white/10 pointer-events-none">
                         <div className="space-y-1">
                           <div className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest">95th %ile</div>
                           <div className="text-sm font-bold text-foreground">

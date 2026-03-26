@@ -44,7 +44,7 @@ export const Sidebar: React.FC = () => {
         <SidebarItem icon={ListTodo} label="TASKS" href="/tasks" active={pathname === "/tasks"} />
         <SidebarItem icon={ListVideo} label="WATCHLIST" href="/watchlist" active={pathname === "/watchlist"} />
         <SidebarItem icon={Target} label="GOALS" href="/goals" active={pathname === "/goals"} />
-        <SidebarItem icon={Sparkles} label="WHAT-IF" href="/what-if" active={pathname === "/what-if"} />
+        <SidebarItem icon={Target} label="GOALS" href="/goals" active={pathname === "/goals"} />
       </nav>
 
       <div className="p-4 space-y-4">
