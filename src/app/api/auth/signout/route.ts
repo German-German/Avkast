@@ -6,7 +6,7 @@ export async function POST() {
   try {
     const cookieStore = await cookies();
     const token = cookieStore.get("avkast_session")?.value;
-    if (token) deleteSession(token);
+    if (token) await deleteSession(token);
 
     const response = NextResponse.json({ message: "Signed out." });
     response.cookies.set("avkast_session", "", {

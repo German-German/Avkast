@@ -1,6 +1,7 @@
 import Database from "better-sqlite3";
 import path from "path";
 import crypto from "crypto";
+import { getSupabaseAdmin } from "./supabase";
 import fs from "fs";
 
 const DB_DIR = path.join(process.cwd(), "data");
@@ -87,17 +88,168 @@ export function verifyPassword(password: string, hash: string, salt: string): bo
   }
 }
 
+// ── User helpers ────────────────────────────────────────────
+
+export async function findUserByEmail(email: string): Promise<any | null> {
+  const cleanEmail = email.toLowerCase();
+
+  // Try Supabase
+  try {
+    const supabase = getSupabaseAdmin();
+    const { data: user, error } = await supabase
+      .from("users")
+      .select("*")
+      .eq("email", cleanEmail)
+      .single();
+    if (!error && user) return user;
+  } catch (err) {}
+
+  // Fallback to SQLite
+  const db = getDb();
+  return db.prepare("SELECT * FROM users WHERE email = ?").get(cleanEmail);
+}
+
+export async function findUserByUsername(username: string): Promise<any | null> {
+  // Try Supabase
+  try {
+    const supabase = getSupabaseAdmin();
+    const { data: user, error } = await supabase
+      .from("users")
+      .select("*")
+      .eq("username", username)
+      .single();
+    if (!error && user) return user;
+  } catch (err) {}
+
+  // Fallback to SQLite
+  const db = getDb();
+  return db.prepare("SELECT * FROM users WHERE username = ?").get(username);
+}
+
+export async function createUser(user: { id: string, username: string, email: string, password_hash: string, salt: string, initial_wealth?: number, preferred_markets?: string }): Promise<void> {
+  // Try Supabase
+  try {
+    const supabase = getSupabaseAdmin();
+    const { error } = await supabase
+      .from("users")
+      .insert({
+        id: user.id,
+        username: user.username,
+        email: user.email.toLowerCase(),
+        password_hash: user.password_hash,
+        salt: user.salt,
+        initial_wealth: user.initial_wealth || 0,
+        preferred_markets: user.preferred_markets || "[]"
+      });
+    if (!error) return;
+  } catch (err) {}
+
+  // Fallback to SQLite
+  const db = getDb();
+  db.prepare(
+    "INSERT INTO users (id, username, email, password_hash, salt, initial_wealth, preferred_markets) VALUES (?, ?, ?, ?, ?, ?, ?)"
+  ).run(
+    user.id,
+    user.username,
+    user.email.toLowerCase(),
+    user.password_hash,
+    user.salt,
+    user.initial_wealth || 0,
+    user.preferred_markets || "[]"
+  );
+}
+
+// ── Watchlist helpers ───────────────────────────────────────
+
+export async function getWatchlist(userId: string): Promise<any[]> {
+  // Try Supabase
+  try {
+    const supabase = getSupabaseAdmin();
+    const { data, error } = await supabase
+      .from("watchlist")
+      .select("*")
+      .eq("user_id", userId)
+      .order("added_at", { ascending: false });
+    if (!error && data) return data;
+  } catch (err) {}
+
+  // Fallback to SQLite
+  const db = getDb();
+  return db.prepare("SELECT * FROM watchlist WHERE user_id = ? ORDER BY added_at DESC").all(userId);
+}
+
+export async function addToWatchlist(userId: string, item: { id: string, ticker: string, name: string, sector: string }): Promise<void> {
+  // Try Supabase
+  try {
+    const supabase = getSupabaseAdmin();
+    const { error } = await supabase
+      .from("watchlist")
+      .insert({
+        id: item.id,
+        user_id: userId,
+        ticker: item.ticker.toUpperCase(),
+        name: item.name || "",
+        sector: item.sector || ""
+      });
+    if (!error) return;
+  } catch (err) {}
+
+  // Fallback to SQLite
+  const db = getDb();
+  db.prepare("INSERT INTO watchlist (id, user_id, ticker, name, sector) VALUES (?, ?, ?, ?, ?)").run(
+    item.id, userId, item.ticker.toUpperCase(), item.name || "", item.sector || ""
+  );
+}
+
+export async function removeFromWatchlist(userId: string, ticker: string): Promise<void> {
+  // Try Supabase
+  try {
+    const supabase = getSupabaseAdmin();
+    const { error } = await supabase
+      .from("watchlist")
+      .delete()
+      .eq("user_id", userId)
+      .eq("ticker", ticker.toUpperCase());
+    if (!error) return;
+  } catch (err) {}
+
+  // Fallback to SQLite
+  const db = getDb();
+  db.prepare("DELETE FROM watchlist WHERE user_id = ? AND ticker = ?").run(userId, ticker.toUpperCase());
+}
+
 // ── Session helpers ─────────────────────────────────────────
 
-export function createSession(userId: string | null, isGuest: boolean = false): string {
-  const db = getDb();
+export async function createSession(userId: string | null, isGuest: boolean = false): Promise<string> {
   const token = crypto.randomBytes(32).toString("hex");
   const expires = new Date(Date.now() + (isGuest ? 4 * 60 * 60 * 1000 : 30 * 24 * 60 * 60 * 1000));
+  const sessionId = crypto.randomBytes(16).toString("hex");
 
+  // Try Supabase first (Production/Vercel)
+  try {
+    const supabase = getSupabaseAdmin();
+    const { error } = await supabase
+      .from("sessions")
+      .insert({
+        id: sessionId,
+        user_id: userId,
+        token: token,
+        is_guest: isGuest,
+        expires_at: expires.toISOString()
+      });
+    
+    if (!error) return token;
+    console.warn("[DB] Supabase session creation failed, falling back to SQLite:", error.message);
+  } catch (err) {
+    console.warn("[DB] Supabase not configured for sessions, falling back to SQLite.");
+  }
+
+  // Fallback to SQLite (Local Dev)
+  const db = getDb();
   db.prepare(
     `INSERT INTO sessions (id, user_id, token, is_guest, expires_at) VALUES (?, ?, ?, ?, ?)`
   ).run(
-    crypto.randomBytes(16).toString("hex"),
+    sessionId,
     userId,
     token,
     isGuest ? 1 : 0,
@@ -107,7 +259,44 @@ export function createSession(userId: string | null, isGuest: boolean = false): 
   return token;
 }
 
-export function getSessionUser(token: string): { id: string; username: string; email: string; isGuest: boolean; initialWealth?: number; preferredMarkets?: string } | null {
+export async function getSessionUser(token: string): Promise<{ id: string; username: string; email: string; isGuest: boolean; initialWealth?: number; preferredMarkets?: string } | null> {
+  // Try Supabase first
+  try {
+    const supabase = getSupabaseAdmin();
+    const { data: session, error } = await supabase
+      .from("sessions")
+      .select(`
+        user_id, is_guest, expires_at,
+        users (username, email, initial_wealth, preferred_markets)
+      `)
+      .eq("token", token)
+      .single();
+
+    if (!error && session) {
+      if (new Date(session.expires_at) < new Date()) {
+        await supabase.from("sessions").delete().eq("token", token);
+        return null;
+      }
+      
+      if (session.is_guest) {
+        return { id: "guest", username: "Guest", email: "", isGuest: true };
+      }
+
+      const user = (session as any).users;
+      return {
+        id: session.user_id,
+        username: user.username,
+        email: user.email,
+        isGuest: false,
+        initialWealth: user.initial_wealth,
+        preferredMarkets: user.preferred_markets,
+      };
+    }
+  } catch (err) {
+    // Fallback silently to SQLite
+  }
+
+  // Fallback to SQLite
   const db = getDb();
   const session = db.prepare(
     `SELECT s.user_id, s.is_guest, s.expires_at, u.username, u.email, u.initial_wealth, u.preferred_markets
@@ -135,7 +324,34 @@ export function getSessionUser(token: string): { id: string; username: string; e
   };
 }
 
-export function deleteSession(token: string): void {
+export async function upgradeSession(token: string, userId: string): Promise<void> {
+  const expires = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+
+  // Try Supabase
+  try {
+    const supabase = getSupabaseAdmin();
+    const { error } = await supabase
+      .from("sessions")
+      .update({ user_id: userId, is_guest: false, expires_at: expires })
+      .eq("token", token);
+    if (!error) return;
+  } catch (err) {}
+
+  // Fallback to SQLite
+  const db = getDb();
+  db.prepare(
+    "UPDATE sessions SET user_id = ?, is_guest = 0, expires_at = ? WHERE token = ?"
+  ).run(userId, expires, token);
+}
+
+export async function deleteSession(token: string): Promise<void> {
+  // Try Supabase
+  try {
+    const supabase = getSupabaseAdmin();
+    await supabase.from("sessions").delete().eq("token", token);
+  } catch (err) {}
+
+  // Local fallback
   const db = getDb();
   db.prepare(`DELETE FROM sessions WHERE token = ?`).run(token);
 }

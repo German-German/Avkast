@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getDb, hashPassword } from "@/lib/db";
+import { hashPassword, findUserByEmail, findUserByUsername, createUser, upgradeSession, getSessionUser } from "@/lib/db";
 import { cookies } from "next/headers";
 import crypto from "crypto";
 
@@ -18,35 +18,31 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Session expired or invalid." }, { status: 401 });
     }
 
-    const db = getDb();
-    const session = db.prepare("SELECT * FROM sessions WHERE token = ?").get(token) as any;
-
-    if (!session || session.is_guest !== 1) {
+    const sessionUser = await getSessionUser(token);
+    if (!sessionUser || !sessionUser.isGuest) {
       return NextResponse.json({ error: "Invalid guest session." }, { status: 400 });
     }
 
     // Check if user already exists
-    const existing = db.prepare("SELECT username, email FROM users WHERE username = ? OR email = ?").get(username, email) as any;
-    if (existing) {
-      if (existing.email === email) return NextResponse.json({ error: "Email already in use." }, { status: 409 });
-      if (existing.username === username) return NextResponse.json({ error: "Username taken." }, { status: 409 });
-    }
+    const existingEmail = await findUserByEmail(email);
+    if (existingEmail) return NextResponse.json({ error: "Email already in use." }, { status: 409 });
+
+    const existingUser = await findUserByUsername(username);
+    if (existingUser) return NextResponse.json({ error: "Username taken." }, { status: 409 });
 
     const userId = crypto.randomUUID();
     const { hash, salt } = hashPassword(password);
 
-    db.transaction(() => {
-      // Insert new user
-      db.prepare(
-        "INSERT INTO users (id, username, email, password_hash, salt) VALUES (?, ?, ?, ?, ?)"
-      ).run(userId, username, email, hash, salt);
+    // Create user and upgrade session
+    await createUser({
+      id: userId,
+      username,
+      email,
+      password_hash: hash,
+      salt
+    });
 
-      // Upgrade session
-      const expires = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(); // 30 days
-      db.prepare(
-        "UPDATE sessions SET user_id = ?, is_guest = 0, expires_at = ? WHERE token = ?"
-      ).run(userId, expires, token);
-    })();
+    await upgradeSession(token, userId);
 
     return NextResponse.json({ message: "Account upgraded successfully.", user: { id: userId, username, email, isGuest: false } }, { status: 201 });
   } catch (error: any) {

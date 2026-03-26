@@ -3,7 +3,7 @@ import { createSession } from "@/lib/db";
 
 export async function POST() {
   try {
-    const token = createSession(null, true);
+    const token = await createSession(null, true);
 
     const response = NextResponse.json({
       success: true,

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import crypto from 'crypto';
-import { getDb, hashPassword, createSession } from "@/lib/db";
+import { hashPassword, createSession, findUserByEmail, findUserByUsername, createUser } from "@/lib/db";
 
 export async function POST(request: Request) {
   try {
@@ -19,21 +19,26 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Username must be 2-30 characters." }, { status: 400 });
     }
 
-    const db = getDb();
+    const existingEmail = await findUserByEmail(email);
+    if (existingEmail) return NextResponse.json({ error: "A user with this email already exists." }, { status: 409 });
 
-    const existing = db.prepare("SELECT id FROM users WHERE email = ? OR username = ?").get(email.toLowerCase(), username);
-    if (existing) {
-      return NextResponse.json({ error: "A user with this email or username already exists." }, { status: 409 });
-    }
+    const existingUser = await findUserByUsername(username);
+    if (existingUser) return NextResponse.json({ error: "A user with this username already exists." }, { status: 409 });
 
     const { hash, salt } = hashPassword(password);
     const userId = crypto.randomUUID();
 
-    db.prepare(
-      "INSERT INTO users (id, username, email, password_hash, salt, initial_wealth, preferred_markets) VALUES (?, ?, ?, ?, ?, ?, ?)"
-    ).run(userId, username, email.toLowerCase(), hash, salt, initialWealth ? Number(initialWealth) : 0, preferredMarkets ? JSON.stringify(preferredMarkets) : "[]");
+    await createUser({
+      id: userId,
+      username,
+      email,
+      password_hash: hash,
+      salt,
+      initial_wealth: initialWealth ? Number(initialWealth) : 0,
+      preferred_markets: preferredMarkets ? JSON.stringify(preferredMarkets) : "[]"
+    });
 
-    const token = createSession(userId);
+    const token = await createSession(userId);
 
     const response = NextResponse.json({
       message: "Account created successfully.",
