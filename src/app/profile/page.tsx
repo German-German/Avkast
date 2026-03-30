@@ -35,6 +35,10 @@ export default function ProfilePage() {
         body: JSON.stringify({ username, email, password }),
       });
 
+      const contentType = res.headers.get("content-type") || "";
+      if (!contentType.includes("application/json")) {
+        throw new Error("Server error: unexpected response. Please try again.");
+      }
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Upgrade failed");
 

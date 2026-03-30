@@ -94,10 +94,17 @@ export default function AdvisorPage() {
         })
       });
 
+      // Guard: check content-type before attempting JSON parse
+      // If the server returned an HTML error page, .json() would throw a SyntaxError
+      const contentType = response.headers.get("content-type") || "";
+      if (!contentType.includes("application/json")) {
+        throw new Error("Neural link unstable. Unexpected server response format.");
+      }
+
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.details || "Neural link unstable.");
+        throw new Error(data.details || data.error || "Neural link unstable.");
       }
       
       setMessages(prev => [...prev, {

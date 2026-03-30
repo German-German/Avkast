@@ -38,6 +38,10 @@ export default function AuthPage() {
 
       let data;
       try {
+        const ct = res.headers.get("content-type") || "";
+        if (!ct.includes("application/json")) {
+          throw new Error("Malformed server response (non-JSON)");
+        }
         data = await res.json();
       } catch (parseErr) {
         console.error("[AuthPage] Failed to parse response JSON:", parseErr);
@@ -73,6 +77,10 @@ export default function AuthPage() {
     console.log("[AuthPage] Starting guest session...");
     try {
       const res = await fetch("/api/auth/guest", { method: "POST" });
+      const ct = res.headers.get("content-type") || "";
+      if (!ct.includes("application/json")) {
+        throw new Error("Server error: unexpected response. Please try again.");
+      }
       const data = await res.json();
       console.log("[AuthPage] Guest response:", data);
       

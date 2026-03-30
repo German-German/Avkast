@@ -37,7 +37,7 @@ Informational context only. Not guaranteed financial advice.
 `.trim();
 
 export const AI_CONFIG = {
-  model: process.env.NEXT_PUBLIC_GEMINI_MODEL || "gemini-1.5-flash",
+  model: process.env.NEXT_PUBLIC_GEMINI_MODEL || "gemini-2.5-flash",
   generationConfig: {
     temperature: 0.1, // Low temperature for deterministic, factual financial logic
     topK: 1,
