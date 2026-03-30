@@ -40,7 +40,10 @@ export default function AdvisorPage() {
 
   useEffect(() => {
     if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+      scrollRef.current.scrollTo({
+        top: scrollRef.current.scrollHeight,
+        behavior: "smooth"
+      });
     }
   }, [messages, isTyping]);
 
@@ -232,7 +235,7 @@ export default function AdvisorPage() {
             }
           />
 
-          <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-10 scrollbar-hide pb-32" ref={scrollRef}>
+          <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-10 scrollbar-hide pb-8" ref={scrollRef}>
             {messages.map((msg, i) => (
               <div key={i} className={cn(
                 "flex gap-4 max-w-5xl items-start group animation-slide-up",
@@ -249,7 +252,7 @@ export default function AdvisorPage() {
                 
                 <div className={cn("space-y-3", msg.role === "user" ? "items-end flex flex-col" : "")}>
                   <div className={cn(
-                    "p-5 rounded-2xl text-[13px] leading-relaxed shadow-lg max-w-2xl",
+                    "p-5 rounded-2xl text-[13px] leading-relaxed shadow-lg max-w-2xl whitespace-pre-wrap",
                     msg.role === "assistant" 
                       ? "glass border-white/5 bg-white/[0.03] text-foreground font-medium" 
                       : "bg-primary text-primary-foreground font-bold"
@@ -288,8 +291,8 @@ export default function AdvisorPage() {
             )}
           </div>
 
-          {/* Fixed Bottom Input Area (Polished) */}
-          <div className="absolute bottom-0 left-0 right-0 p-4 md:p-8 pt-4 bg-background/50 backdrop-blur-xl border-t border-white/5 z-20">
+          {/* Bottom Input Area (Polished) */}
+          <div className="p-4 md:p-8 pt-4 bg-background/50 backdrop-blur-xl border-t border-white/5 z-20 shrink-0">
             <div className="max-w-4xl mx-auto space-y-4">
               <div className="relative group">
                 <div className="absolute -inset-0.5 bg-gradient-to-r from-primary/20 to-accent/20 rounded-2xl blur opacity-0 group-focus-within:opacity-100 transition duration-500" />
