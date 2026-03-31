@@ -243,68 +243,87 @@ export default function SandboxPage() {
                   )}
                 </div>
 
-                <div className="flex-1 p-10 relative flex items-center justify-center min-h-[450px]">
+                <div className="flex-1 p-6 relative flex flex-col min-h-[500px]">
                   {!simulation ? (
-                    <div className="text-center opacity-30 flex flex-col items-center gap-3">
-                      <Activity className="h-10 w-10" />
+                    <div className="flex-1 flex flex-col items-center justify-center text-center opacity-30 gap-3">
+                      <Activity className="h-10 w-10 text-primary" />
                       <span className="text-xs font-bold tracking-widest uppercase">Awaiting Parameters</span>
                     </div>
                   ) : (
-                    <div className="w-full h-full relative">
-                      {/* Chart Grid Lines */}
-                      <div className="absolute inset-0 flex flex-col justify-between pointer-events-none opacity-20">
-                        {[1,2,3,4,5].map(i => (
-                          <div key={i} className="w-full border-t border-dashed border-white/20" />
-                        ))}
+                    <div className="flex-1 grid grid-cols-12 gap-8 h-full">
+                      {/* Left: Main Chart Area */}
+                      <div className="col-span-12 lg:col-span-9 relative h-full min-h-[350px]">
+                        {/* Chart Grid Lines */}
+                        <div className="absolute inset-0 flex flex-col justify-between pointer-events-none opacity-10">
+                          {[0, 1, 2, 3, 4].map(i => (
+                            <div key={i} className="w-full border-t border-white" />
+                          ))}
+                        </div>
+
+                        {/* SVG Simulation Graphic */}
+                        <svg 
+                          viewBox={`0 0 ${chartWidth} ${chartHeight}`} 
+                          className="w-full h-full preserve-3d overflow-visible"
+                          preserveAspectRatio="none"
+                        >
+                          <defs>
+                            <linearGradient id="highGrad" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="0%" stopColor="rgb(112,130,56)" stopOpacity="0.2" />
+                              <stop offset="100%" stopColor="rgb(112,130,56)" stopOpacity="0" />
+                            </linearGradient>
+                          </defs>
+                          
+                          {/* 95th Percentile Area & Path */}
+                          <path d={`M 0 ${chartHeight} ${createPath(simulation.paths.high)} L ${chartWidth} ${chartHeight} Z`} fill="url(#highGrad)" />
+                          <path d={createPath(simulation.paths.high)} fill="none" stroke="rgba(112,130,56,0.2)" strokeWidth="1" strokeDasharray="4 4" />
+                          
+                          {/* 5th Percentile Path */}
+                          <path d={createPath(simulation.paths.low)} fill="none" stroke="rgba(239,68,68,0.2)" strokeWidth="1" strokeDasharray="4 4" />
+                          
+                          {/* Median Path */}
+                          <path 
+                            d={createPath(simulation.paths.median)} 
+                            fill="none" 
+                            stroke="rgb(112,130,56)" 
+                            strokeWidth="3" 
+                            className="drop-shadow-[0_0_8px_rgba(112,130,56,0.5)]" 
+                          />
+
+                          {/* End node */}
+                          <circle 
+                            cx={chartWidth} 
+                            cy={chartHeight - (simulation.paths.median[simulation.paths.median.length-1] / maxVal * chartHeight)} 
+                            r="4" 
+                            fill="rgb(112,130,56)" 
+                          />
+                        </svg>
                       </div>
 
-                      {/* SVG Simulation Graphic */}
-                      <svg viewBox={`0 0 ${chartWidth} ${chartHeight}`} className="w-full h-full preserve-3d overflow-visible">
-                        <defs>
-                          <linearGradient id="highGrad" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stopColor="rgb(112,130,56)" stopOpacity="0.3" />
-                            <stop offset="100%" stopColor="rgb(112,130,56)" stopOpacity="0" />
-                          </linearGradient>
-                        </defs>
-                        
-                        {/* 95th Percentile Area & Path */}
-                        <path d={`M 0 ${chartHeight} ${createPath(simulation.paths.high)} L ${chartWidth} ${chartHeight} Z`} fill="url(#highGrad)" />
-                        <path d={createPath(simulation.paths.high)} fill="none" stroke="rgba(112,130,56,0.3)" strokeWidth="2" strokeDasharray="4 4" />
-                        
-                        {/* 5th Percentile Area & Path */}
-                        <path d={createPath(simulation.paths.low)} fill="none" stroke="rgba(239,68,68,0.3)" strokeWidth="2" strokeDasharray="4 4" />
-                        
-                        {/* Median Path */}
-                        <path d={createPath(simulation.paths.median)} fill="none" stroke="rgb(112,130,56)" strokeWidth="4" className="drop-shadow-[0_0_8px_rgba(112,130,56,0.8)]" />
-
-                        {/* End nodes */}
-                        <circle cx={chartWidth} cy={chartHeight - (simulation.paths.median[simulation.paths.median.length-1] / maxVal * chartHeight)} r="6" fill="rgb(112,130,56)" />
-                        
-                      </svg>
-                      
-                      {/* Tooltips/Labels on right side */}
-                      <div className="absolute right-0 top-0 bottom-0 flex flex-col justify-between translate-x-[calc(100%+1.5rem)] py-4 w-40 border-l border-white/10 pointer-events-none">
-                        <div className="space-y-1">
-                          <div className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest">95th %ile</div>
-                          <div className="text-sm font-bold text-foreground">
+                      {/* Right: Insight Panel */}
+                      <div className="col-span-12 lg:col-span-3 space-y-8 flex flex-col justify-center border-l border-white/5 pl-8">
+                        <div className="space-y-1.5 p-4 rounded-xl bg-white/[0.02] border border-white/5">
+                          <div className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest">Optimistic (95th)</div>
+                          <div className="text-xl font-bold text-foreground">
                             ${Math.floor(simulation.paths.high[simulation.paths.high.length-1]).toLocaleString()}
                           </div>
                           <div className="text-[10px] font-mono text-accent">
-                            +${Math.floor(simulation.paths.high[simulation.paths.high.length-1] - initialInvestment).toLocaleString()} / +{(((simulation.paths.high[simulation.paths.high.length-1] - initialInvestment)/initialInvestment)*100).toFixed(0)}%
+                            ROI: +{(((simulation.paths.high[simulation.paths.high.length-1] - initialInvestment)/initialInvestment)*100).toFixed(0)}%
                           </div>
                         </div>
-                        <div className="space-y-1">
-                          <div className="text-[10px] text-primary uppercase font-bold tracking-widest">Median (50th)</div>
-                          <div className="text-base font-bold text-primary drop-shadow-[0_0_8px_rgba(112,130,56,0.5)]">
+
+                        <div className="space-y-1.5 p-4 rounded-xl bg-primary/10 border border-primary/20 shadow-[0_0_20px_rgba(112,130,56,0.1)]">
+                          <div className="text-[10px] text-primary uppercase font-bold tracking-widest">Moderate (Median)</div>
+                          <div className="text-2xl font-bold text-primary">
                             ${Math.floor(simulation.paths.median[simulation.paths.median.length-1]).toLocaleString()}
                           </div>
-                          <div className="text-[10px] font-mono text-primary">
-                            +${Math.floor(simulation.paths.median[simulation.paths.median.length-1] - initialInvestment).toLocaleString()} / +{(((simulation.paths.median[simulation.paths.median.length-1] - initialInvestment)/initialInvestment)*100).toFixed(0)}%
+                          <div className="text-[10px] font-mono text-primary font-bold">
+                            Yield: +${Math.floor(simulation.paths.median[simulation.paths.median.length-1] - initialInvestment).toLocaleString()}
                           </div>
                         </div>
-                        <div className="space-y-1">
-                          <div className="text-[10px] text-destructive uppercase font-bold tracking-widest">5th %ile</div>
-                          <div className="text-sm font-bold text-destructive">
+
+                        <div className="space-y-1.5 p-4 rounded-xl bg-white/[0.02] border border-white/5">
+                          <div className="text-[10px] text-destructive uppercase font-bold tracking-widest">Conservative (5th)</div>
+                          <div className="text-xl font-bold text-destructive">
                             ${Math.floor(simulation.paths.low[simulation.paths.low.length-1]).toLocaleString()}
                           </div>
                           {(() => {
@@ -312,13 +331,12 @@ export default function SandboxPage() {
                              const roi = (gain / initialInvestment) * 100;
                              return (
                                <div className={cn("text-[10px] font-mono", gain >= 0 ? "text-accent" : "text-destructive")}>
-                                 {gain >= 0 ? "+" : ""}${Math.floor(gain).toLocaleString()} / {roi >= 0 ? "+" : ""}{roi.toFixed(0)}%
+                                 {roi >= 0 ? "+" : ""}{roi.toFixed(0)}% Net Return
                                </div>
                              );
                           })()}
                         </div>
                       </div>
-
                     </div>
                   )}
                 </div>

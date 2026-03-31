@@ -13,7 +13,6 @@ export async function GET() {
   try {
     const user = await getUser();
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    if (user.isGuest) return NextResponse.json({ items: [] });
 
     const items = await getWatchlist(user.id);
     return NextResponse.json({ items });
@@ -53,7 +52,7 @@ export async function POST(request: Request) {
 export async function DELETE(request: Request) {
   try {
     const user = await getUser();
-    if (!user || user.isGuest) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const { ticker } = await request.json();
     if (!ticker) return NextResponse.json({ error: "Ticker is required." }, { status: 400 });

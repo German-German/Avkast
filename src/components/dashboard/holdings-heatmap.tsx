@@ -5,7 +5,7 @@ import { generateUserPortfolio } from "@/lib/portfolio-engine";
 import { useMarketData } from "@/hooks/use-market-data";
 import { useMemo } from "react";
 
-const BASE_TICKERS = ["AAPL", "MSFT", "TSLA", "GOOGL", "AMZN", "NVDA", "META", "V", "JPM", "XOM", "WMT", "ASML"];
+const BASE_TICKERS = ["AAPL", "MSFT", "TSLA", "GOOGL", "AMZN", "NVDA", "META", "V", "JPM", "XOM", "WMT", "ASML", "GLD", "SLV", "USO"];
 
 export const HoldingsHeatMap: React.FC = () => {
   const { user, isGuest } = useAuth();

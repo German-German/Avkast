@@ -34,6 +34,8 @@ const SEARCH_SUGGESTIONS: Record<string, { name: string; sector: string }> = {
   USO: { name: "United States Oil Fund", sector: "Commodities" },
   UNG: { name: "US Natural Gas Fund", sector: "Commodities" },
   CPER: { name: "US Copper Index Fund", sector: "Commodities" },
+  DBA: { name: "Invesco Agriculture Fund", sector: "Commodities" },
+  PPLT: { name: "Platinum Trust", sector: "Commodities" },
   ASML: { name: "ASML Holding", sector: "Technology" },
   NEE: { name: "NextEra Energy", sector: "Utilities" },
 };

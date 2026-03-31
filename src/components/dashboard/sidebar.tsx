@@ -45,8 +45,6 @@ export const Sidebar: React.FC = () => {
         <SidebarItem icon={ListVideo} label="WATCHLIST" href="/watchlist" active={pathname === "/watchlist"} />
         <SidebarItem icon={Newspaper} label="NEWS" href="/news" active={pathname === "/news"} />
         <SidebarItem icon={Target} label="GOALS" href="/goals" active={pathname === "/goals"} />
-        <div className="h-px bg-white/5 mx-2 my-1" />
-        <SidebarItem icon={HelpCircle} label="SUPPORT" href="/support" active={pathname === "/support"} />
       </nav>
 
       <div className="mt-auto">
@@ -67,14 +65,26 @@ export const Sidebar: React.FC = () => {
           </div>
         </div>
         
-        <div className="p-2 space-y-1">
+        <div className="flex flex-col p-2 space-y-1">
           <WealthDistribution className="mx-2 mb-2" />
-          <div onClick={signOut} className="flex items-center gap-3 px-4 py-3 cursor-pointer transition-all duration-200 group hover:bg-destructive/10">
+          <div onClick={signOut} className="flex items-center gap-3 px-4 py-3 cursor-pointer transition-all duration-200 group hover:bg-destructive/10 leading-none">
             <LogOut className="h-5 w-5 text-muted-foreground group-hover:text-destructive" />
-            <span className="text-sm font-medium text-muted-foreground group-hover:text-destructive text-[11px] font-bold tracking-widest">
+            <span className="text-sm font-medium text-muted-foreground group-hover:text-destructive text-[11px] font-bold tracking-widest uppercase">
               SIGN OUT
             </span>
           </div>
+          <div className="h-px bg-white/5 mx-2 my-1" />
+          <Link href="/support">
+            <div className={cn(
+              "flex items-center gap-3 px-4 py-3 cursor-pointer transition-all duration-200 group rounded-xl",
+              pathname === "/support" ? "bg-primary/10" : "hover:bg-white/5"
+            )}>
+              <HelpCircle className={cn("h-5 w-5", pathname === "/support" ? "text-primary" : "text-muted-foreground group-hover:text-foreground")} />
+              <span className={cn("text-[11px] font-bold tracking-widest uppercase", pathname === "/support" ? "text-foreground" : "text-muted-foreground group-hover:text-foreground")}>
+                SUPPORT
+              </span>
+            </div>
+          </Link>
         </div>
       </div>
     </aside>

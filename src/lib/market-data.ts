@@ -1,6 +1,7 @@
 /**
  * Market Data Service
  * Provides real-time and simulated market data for stocks and commodities.
+ * Integrates with Alpha Vantage API.
  */
 
 export interface MarketData {
@@ -20,21 +21,56 @@ const CACHED_PRICES: Record<string, MarketData> = {};
 const INITIAL_PRICES: Record<string, number> = {
   AAPL: 189.45, MSFT: 415.2, NVDA: 875.4, GOOGL: 157.8, AMZN: 187.3,
   TSLA: 248.6, META: 502.3, V: 278.9, JPM: 198.4, XOM: 108.2,
-  WMT: 168.7, BRK: 381.6, GLD: 185.6, SLV: 23.45, USO: 76.12,
-  UNG: 16.34, CPER: 25.67, ASML: 892.3, NEE: 62.4
+  WMT: 168.7, BRK: 381.6, GLD: 2185.6, SLV: 24.45, USO: 76.12,
+  UNG: 16.34, CPER: 25.67, ASML: 892.3, NEE: 62.4, DBA: 24.12, PPLT: 92.45
 };
 
+const API_KEY = process.env.ALPHA_VANTAGE_API_KEY;
+
+async function fetchFromAlphaVantage(ticker: string): Promise<Partial<MarketData> | null> {
+  if (!API_KEY || API_KEY === "YOUR_ALPHA_VANTAGE_API_KEY_HERE") return null;
+
+  try {
+    const res = await fetch(`https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${ticker}&apikey=${API_KEY}`);
+    const data = await res.json();
+    const quote = data["Global Quote"];
+    
+    if (quote && quote["05. price"]) {
+      return {
+        price: parseFloat(quote["05. price"]),
+        change: parseFloat(quote["09. change"]),
+        changePercent: parseFloat(quote["10. change percent"].replace("%", ""))
+      };
+    }
+  } catch (err) {
+    console.error(`Alpha Vantage fetch error for ${ticker}:`, err);
+  }
+  return null;
+}
+
 export async function getMarketData(tickers: string[]): Promise<MarketData[]> {
-  // In a real app, this would fetch from an API like Alpha Vantage or Finnhub.
-  // For this project, we'll simulate real-time updates by fluctuating base prices.
-  
   const now = new Date().toISOString();
   
-  return tickers.map(ticker => {
+  const results = await Promise.all(tickers.map(async (ticker) => {
     const tickerUpper = ticker.toUpperCase();
     const basePrice = INITIAL_PRICES[tickerUpper] || 100;
     
-    // If not cached, initialize
+    // Try Alpha Vantage first
+    const apiData = await fetchFromAlphaVantage(tickerUpper);
+    
+    if (apiData) {
+      const updated: MarketData = {
+        ticker: tickerUpper,
+        price: apiData.price!,
+        change: apiData.change!,
+        changePercent: apiData.changePercent!,
+        lastUpdated: now
+      };
+      CACHED_PRICES[tickerUpper] = updated;
+      return updated;
+    }
+
+    // Fallback to simulation
     if (!CACHED_PRICES[tickerUpper]) {
       CACHED_PRICES[tickerUpper] = {
         ticker: tickerUpper,
@@ -46,9 +82,7 @@ export async function getMarketData(tickers: string[]): Promise<MarketData[]> {
     }
     
     const current = CACHED_PRICES[tickerUpper];
-    
-    // Simulate a small market movement (-0.5% to +0.5%)
-    const movement = (Math.random() - 0.5) * 0.01; 
+    const movement = (Math.random() - 0.5) * 0.002; 
     const newPrice = current.price * (1 + movement);
     const dayChange = newPrice - basePrice;
     const dayChangePercent = (dayChange / basePrice) * 100;
@@ -63,11 +97,12 @@ export async function getMarketData(tickers: string[]): Promise<MarketData[]> {
     
     CACHED_PRICES[tickerUpper] = updated;
     return updated;
-  });
+  }));
+
+  return results;
 }
 
 export async function searchTicker(query: string) {
-  // Simple search over our known list
   const all = [...STOCK_LIST, ...COMMODITY_LIST];
   return all.filter(t => t.includes(query.toUpperCase()));
 }
