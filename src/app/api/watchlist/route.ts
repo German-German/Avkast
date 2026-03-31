@@ -26,7 +26,7 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const user = await getUser();
-    if (!user || user.isGuest) return NextResponse.json({ error: "Guests cannot save watchlist items. Sign up for a free account." }, { status: 403 });
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const { ticker, name, sector } = await request.json();
     if (!ticker) return NextResponse.json({ error: "Ticker is required." }, { status: 400 });

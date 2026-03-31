@@ -15,32 +15,41 @@ interface WatchlistItem {
   added_at: string;
 }
 
-const MARKET_DATA: Record<string, { price: number; change: number; name: string; sector: string }> = {
-  AAPL: { price: 189.45, change: 2.31, name: "Apple Inc.", sector: "Technology" },
-  MSFT: { price: 415.2, change: 0.87, name: "Microsoft Corp.", sector: "Technology" },
-  NVDA: { price: 875.4, change: 4.12, name: "NVIDIA Corp.", sector: "Technology" },
-  GOOGL: { price: 157.8, change: 0.9, name: "Alphabet Inc.", sector: "Technology" },
-  AMZN: { price: 187.3, change: 0.0, name: "Amazon.com", sector: "Consumer" },
-  TSLA: { price: 248.6, change: -3.1, name: "Tesla Inc.", sector: "Automotive" },
-  META: { price: 502.3, change: -0.4, name: "Meta Platforms", sector: "Technology" },
-  V: { price: 278.9, change: 0.61, name: "Visa Inc.", sector: "Financials" },
-  JPM: { price: 198.4, change: 2.2, name: "JPMorgan Chase", sector: "Financials" },
-  XOM: { price: 108.2, change: -1.2, name: "Exxon Mobil", sector: "Energy" },
-  WMT: { price: 168.7, change: 1.1, name: "Walmart Inc.", sector: "Consumer" },
-  BRK: { price: 381.6, change: -0.33, name: "Berkshire Hathaway", sector: "Financials" },
-  GLD: { price: 185.6, change: 1.04, name: "SPDR Gold Shares", sector: "Commodities" },
-  SLV: { price: 23.45, change: 0.82, name: "iShares Silver Trust", sector: "Commodities" },
-  USO: { price: 76.12, change: -1.45, name: "United States Oil Fund", sector: "Commodities" },
-  UNG: { price: 16.34, change: 2.11, name: "US Natural Gas Fund", sector: "Commodities" },
-  CPER: { price: 25.67, change: 0.54, name: "US Copper Index Fund", sector: "Commodities" },
-  ASML: { price: 892.3, change: 5.1, name: "ASML Holding", sector: "Technology" },
-  NEE: { price: 62.4, change: -0.71, name: "NextEra Energy", sector: "Utilities" },
+// Initial market data for search suggestions
+const SEARCH_SUGGESTIONS: Record<string, { name: string; sector: string }> = {
+  AAPL: { name: "Apple Inc.", sector: "Technology" },
+  MSFT: { name: "Microsoft Corp.", sector: "Technology" },
+  NVDA: { name: "NVIDIA Corp.", sector: "Technology" },
+  GOOGL: { name: "Alphabet Inc.", sector: "Technology" },
+  AMZN: { name: "Amazon.com", sector: "Consumer" },
+  TSLA: { name: "Tesla Inc.", sector: "Automotive" },
+  META: { name: "Meta Platforms", sector: "Technology" },
+  V: { name: "Visa Inc.", sector: "Financials" },
+  JPM: { name: "JPMorgan Chase", sector: "Financials" },
+  XOM: { name: "Exxon Mobil", sector: "Energy" },
+  WMT: { name: "Walmart Inc.", sector: "Consumer" },
+  BRK: { name: "Berkshire Hathaway", sector: "Financials" },
+  GLD: { name: "SPDR Gold Shares", sector: "Commodities" },
+  SLV: { name: "iShares Silver Trust", sector: "Commodities" },
+  USO: { name: "United States Oil Fund", sector: "Commodities" },
+  UNG: { name: "US Natural Gas Fund", sector: "Commodities" },
+  CPER: { name: "US Copper Index Fund", sector: "Commodities" },
+  ASML: { name: "ASML Holding", sector: "Technology" },
+  NEE: { name: "NextEra Energy", sector: "Utilities" },
 };
+
+interface MarketData {
+  ticker: string;
+  price: number;
+  change: number;
+  changePercent: number;
+}
 
 export default function WatchlistPage() {
   const { isGuest } = useAuth();
   const [mounted, setMounted] = useState(false);
   const [items, setItems] = useState<WatchlistItem[]>([]);
+  const [marketData, setMarketData] = useState<Record<string, MarketData>>({});
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [showSearch, setShowSearch] = useState(false);
@@ -50,25 +59,51 @@ export default function WatchlistPage() {
     setMounted(true);
   }, []);
 
+  const fetchPrices = useCallback(async (tickers: string[]) => {
+    if (tickers.length === 0) return;
+    try {
+      const res = await fetch(`/api/market-data?tickers=${tickers.join(",")}`);
+      if (res.ok) {
+        const data = await res.json();
+        const mapping: Record<string, MarketData> = {};
+        data.forEach((d: MarketData) => { mapping[d.ticker] = d; });
+        setMarketData(prev => ({ ...prev, ...mapping }));
+      }
+    } catch (error) {
+      console.error("Failed to fetch prices", error);
+    }
+  }, []);
+
   const fetchWatchlist = useCallback(async () => {
     try {
       const res = await fetch("/api/watchlist");
       if (res.ok) {
         const data = await res.json();
-        setItems(data.items || []);
+        const watchlistItems = data.items || [];
+        setItems(watchlistItems);
+        if (watchlistItems.length > 0) {
+          fetchPrices(watchlistItems.map((i: WatchlistItem) => i.ticker));
+        }
       }
     } catch {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [fetchPrices]);
 
-  useEffect(() => { fetchWatchlist(); }, [fetchWatchlist]);
+  useEffect(() => { 
+    fetchWatchlist(); 
+    const interval = setInterval(() => {
+      if (items.length > 0) {
+        fetchPrices(items.map(i => i.ticker));
+      }
+    }, 60000); // 1 minute
+    return () => clearInterval(interval);
+  }, [fetchWatchlist, items.length, fetchPrices]);
 
   async function addToWatchlist(ticker: string) {
-    if (isGuest) return;
     setAdding(ticker);
-    const md = MARKET_DATA[ticker];
+    const md = SEARCH_SUGGESTIONS[ticker];
     try {
       const res = await fetch("/api/watchlist", {
         method: "POST",
@@ -99,7 +134,7 @@ export default function WatchlistPage() {
   }
 
   const watchedTickers = new Set(items.map(i => i.ticker));
-  const searchResults = Object.entries(MARKET_DATA)
+  const searchResults = Object.entries(SEARCH_SUGGESTIONS)
     .filter(([ticker, data]) =>
       !watchedTickers.has(ticker) &&
       (ticker.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -166,7 +201,6 @@ export default function WatchlistPage() {
                         </div>
                       </div>
                       <div className="flex items-center gap-4">
-                        <span className="text-xs font-mono">${data.price.toFixed(2)}</span>
                         <button
                           onClick={() => addToWatchlist(ticker)}
                           disabled={adding === ticker}
@@ -212,9 +246,10 @@ export default function WatchlistPage() {
                 </thead>
                 <tbody>
                   {items.map((item, i) => {
-                    const md = MARKET_DATA[item.ticker];
-                    const price = md?.price ?? 0;
-                    const change = md?.change ?? 0;
+                    const md = SEARCH_SUGGESTIONS[item.ticker];
+                    const live = marketData[item.ticker.toUpperCase()];
+                    const price = live?.price ?? 0;
+                    const change = live?.change ?? 0;
                     return (
                       <tr key={item.id} className={cn("border-b border-border/50 hover:bg-white/[0.02] transition-colors", i % 2 === 0 ? "" : "bg-white/[0.01]")}>
                         <td className="px-5 py-4">
@@ -224,20 +259,24 @@ export default function WatchlistPage() {
                         <td className="px-5 py-4">
                           <span className="text-[10px] px-2 py-0.5 rounded bg-white/5 text-muted-foreground border border-white/10">{item.sector || md?.sector || "—"}</span>
                         </td>
-                        <td className="px-5 py-4 text-xs font-mono font-semibold">${price.toFixed(2)}</td>
+                        <td className="px-5 py-4 text-xs font-mono font-semibold">
+                          {price > 0 ? `$${price.toFixed(2)}` : <div className="h-4 w-12 bg-white/5 animate-pulse rounded" />}
+                        </td>
                         <td className={cn("px-5 py-4 text-xs font-bold flex items-center gap-1", change >= 0 ? "text-accent" : "text-destructive")}>
-                          {change >= 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
-                          {change >= 0 ? "+" : ""}{change}%
+                          {price > 0 ? (
+                            <>
+                              {change >= 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+                              {change >= 0 ? "+" : ""}{change}%
+                            </>
+                          ) : "—"}
                         </td>
                         <td className="px-5 py-4">
-                          {!isGuest && (
-                            <button
-                              onClick={() => removeFromWatchlist(item.ticker)}
-                              className="h-7 w-7 flex items-center justify-center rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-all"
-                            >
-                              <Trash2 className="h-3.5 w-3.5" />
-                            </button>
-                          )}
+                          <button
+                            onClick={() => removeFromWatchlist(item.ticker)}
+                            className="h-7 w-7 flex items-center justify-center rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-all"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
                         </td>
                       </tr>
                     );

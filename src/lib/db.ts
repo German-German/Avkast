@@ -246,6 +246,15 @@ export async function createSession(userId: string | null, isGuest: boolean = fa
 
   // Fallback to SQLite (Local Dev)
   const db = getDb();
+  
+  if (isGuest) {
+    // Ensure a dummy guest user exists if there's a FK constraint
+    try {
+      db.prepare("INSERT OR IGNORE INTO users (id, username, email, password_hash, salt) VALUES ('guest', 'Guest', 'guest@avkast.local', '', '')").run();
+    } catch (e) {}
+    userId = "guest";
+  }
+
   db.prepare(
     `INSERT INTO sessions (id, user_id, token, is_guest, expires_at) VALUES (?, ?, ?, ?, ?)`
   ).run(
